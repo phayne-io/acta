@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^8.5",
-        "acta/event-sourcing": "^1.0 || dev-main",
+        "acta/event-sourcing": "^1.0@dev",
         "psr/clock": "^1.0",
         "psr/http-client": "^1.0",
         "psr/http-factory": "^1.1",
@@ -29,8 +29,8 @@
     "require-dev": {
         "ext-pdo": "*",
         "ext-pdo_pgsql": "*",
-        "acta/http": "@dev",
-        "acta/oidc": "@dev",
+        "acta/http": "^1.0@dev",
+        "acta/oidc": "^1.0@dev",
         "friendsofphp/php-cs-fixer": "^3.89",
         "laminas/laminas-diactoros": "^3.8",
         "moneyphp/money": "^4.9",
@@ -48,15 +48,30 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../event-sourcing"
+            "url": "../event-sourcing",
+            "options": {
+                "versions": {
+                    "acta/event-sourcing": "1.0.x-dev"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../http"
+            "url": "../http",
+            "options": {
+                "versions": {
+                    "acta/http": "1.0.x-dev"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../oidc"
+            "url": "../oidc",
+            "options": {
+                "versions": {
+                    "acta/oidc": "1.0.x-dev"
+                }
+            }
         }
     ],
     "autoload": {
