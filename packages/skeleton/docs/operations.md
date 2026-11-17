@@ -66,7 +66,7 @@ writes only to `data/cache`. Configure it with the environment variables of
 
 - leave `APP_DEBUG` off and `PROJECTIONS_AFTER_COMMAND` empty;
 - keep `HTTP_RESPONSE_VALIDATION=log`, and alert on the log line it writes;
-- serve the API over TLS and pass the `Authorization` header to PHP (see `docker/nginx`);
+- serve the API over TLS and pass the `Authorization` header to PHP (see `docker/nginx` at the root of the repository);
 - share the cache of identity-provider keys between instances, or accept one fetch per
   instance;
 - run `es:migrate` before starting the new version.
@@ -87,5 +87,5 @@ from the client to the event store and on to the webhooks it triggers.
 `bin/console auth:login` logs a person in with the device flow of your identity
 provider and stores the tokens in `data/token.json`; `auth:logout` forgets them. Use
 them from your own console commands, through `Acta\Oidc\Client\StoredTokenProvider`, to
-call protected APIs in the name of that person. The development provider of
-`compose.yaml` does not implement the device flow.
+call protected APIs in the name of that person. In the local stack, `make login` does
+it against Keycloak, as the user `ada`.

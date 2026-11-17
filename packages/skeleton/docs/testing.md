@@ -3,7 +3,7 @@
 ```sh
 composer test        # everything; PostgreSQL tests are skipped when no server answers
 composer test:unit   # without the PostgreSQL group
-make test            # in Docker, against the database of compose.yaml
+make -C ../../docker test   # in Docker, against the database of the local stack
 ```
 
 Four kinds of tests, from the fastest and most numerous to the fewest.

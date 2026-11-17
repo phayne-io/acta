@@ -12,7 +12,7 @@ return [
     'debug' => Env::bool('APP_DEBUG'),
 
     'acta' => [
-        'name' => 'Acta application',
+        'name' => 'MyBank',
         'version' => Env::string('APP_VERSION', 'dev'),
         'root' => dirname(__DIR__, 2),
         'cache_dir' => 'data/cache',

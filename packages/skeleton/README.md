@@ -1,10 +1,10 @@
-# Acta skeleton
+# MyBank
 
-A project template for hexagonal, event-sourced applications in PHP 8.5 and later: a
+A small bank as a hexagonal, event-sourced application in PHP 8.5 and later: a
 contract-first API, a console and webhooks in front of a domain that knows none of them.
 
-It wires the four Acta libraries together on Mezzio and comes with a small bank as a
-worked example, and with generators that scaffold your own contexts the same way.
+It wires the four Acta libraries together on Mezzio, and comes with generators that
+scaffold further contexts the same way as its `Banking` one.
 
 | | |
 | --- | --- |
@@ -21,27 +21,31 @@ which brings them all.
 
 ## Start
 
+The local stack is in [`docker/`](../../docker), at the root of the repository: the API
+on <https://api.mybank.io> with a mkcert certificate, its workers, PostgreSQL and
+Keycloak as the identity provider.
+
 ```sh
-composer create-project acta/skeleton my-app
-cd my-app
-make up        # the API, its workers, PostgreSQL and a development identity provider
+cd ../../docker
+make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts
+make up
 ```
 
-The API answers on <http://localhost:8080>; its contract is served at `/openapi.json`.
+The contract of the API is served at `/openapi.json`.
 
 ```sh
 TOKEN=$(make -s token)
 
-curl -i -X POST http://localhost:8080/accounts \
+curl -i -X POST https://api.mybank.io/accounts \
      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
      -d '{"owner": "Ada", "currency": "EUR"}'
 # 201 Created — Location: /accounts/0197…
 
-curl -X POST http://localhost:8080/accounts/0197…/deposits \
+curl -X POST https://api.mybank.io/accounts/0197…/deposits \
      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
      -d '{"amount": "12000", "currency": "EUR"}'
 
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/accounts/0197…
+curl -H "Authorization: Bearer $TOKEN" https://api.mybank.io/accounts/0197…
 # {"id":"0197…","owner":"Ada","balance":{"amount":"12000","currency":"EUR"},"version":2}
 ```
 

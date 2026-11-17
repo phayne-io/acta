@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Acta application
+  title: MyBank
   version: 1.0.0
   description: |
     This document is the source of truth of the API: the server routes, authenticates
@@ -10,7 +10,7 @@ info:
     header: retrying it with the same key returns the first response instead of doing
     the work again.
 servers:
-  - url: http://localhost:8080
+  - url: https://api.mybank.io
 tags:
   - name: Banking
     description: Bank accounts.
