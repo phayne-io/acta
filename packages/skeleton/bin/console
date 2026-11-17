@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Symfony\Component\Console\Application;
+
+/*
+ * Console entry point: the commands of the platform and those of the contexts.
+ */
+
+chdir(dirname(__DIR__));
+
+require 'vendor/autoload.php';
+
+exit((static function (): int {
+    $container = require 'config/container.php';
+
+    $application = $container->get(Application::class);
+
+    return $application->run();
+})());

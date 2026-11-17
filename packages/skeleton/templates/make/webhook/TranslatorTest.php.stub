@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\{{ Context }}\Infrastructure;
+
+use Acta\Webhook\Incoming\IncomingWebhook;
+use App\{{ Context }}\Infrastructure\Primary\Webhook\{{ Source }}Translator;
+use App\{{ Context }}\Infrastructure\Primary\Webhook\{{ Source }}WebhookSource;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * What the webhooks of {{ Source }} mean to the {{ Context }} context.
+ *
+ * This test fails until the translator is written: that is its purpose.
+ */
+#[CoversClass({{ Source }}Translator::class)]
+final class {{ Source }}TranslatorTest extends TestCase
+{
+    public function testItTranslatesAnEventIntoCommands(): void
+    {
+        // TODO Use a payload the sender documents, and assert the commands it stands for.
+        $webhook = new IncomingWebhook({{ Source }}WebhookSource::NAME, 'delivery-1', ['type' => 'something.happened'], '{}');
+
+        $commands = [...new {{ Source }}Translator()->translate($webhook)];
+
+        self::assertNotSame([], $commands);
+    }
+}

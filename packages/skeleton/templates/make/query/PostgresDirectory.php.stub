@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Infrastructure\Secondary\Persistence;
+
+use Acta\Console\Schema\Schema;
+use App\{{ Context }}\Application\Query\{{ Aggregate }}View;
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use App\Platform\Sql\Row;
+use Override;
+use PDO;
+
+/**
+ * Secondary adapter: the read model as a PostgreSQL table.
+ *
+ * The table can be dropped at any time: `bin/console projection:rebuild {{ table }}`
+ * fills it again from the events.
+ */
+final readonly class Postgres{{ Aggregate }}Directory implements Writable{{ Aggregate }}Directory, Schema
+{
+    private const string TABLE = '{{ table }}';
+
+    public function __construct(
+        private PDO $pdo,
+    ) {}
+
+    #[Override]
+    public function name(): string
+    {
+        return self::TABLE;
+    }
+
+    /**
+     * Returns the statements creating the table, for `bin/console es:migrate`.
+     *
+     * @return list<string>
+     */
+    #[Override]
+    public function statements(): array
+    {
+        return [
+            <<<'SQL'
+                CREATE TABLE IF NOT EXISTS {{ table }} (
+                    id      UUID    PRIMARY KEY,
+                    version INTEGER NOT NULL
+                )
+                SQL,
+        ];
+    }
+
+    #[Override]
+    public function find({{ Aggregate }}Id $id): ?{{ Aggregate }}View
+    {
+        $row = Row::select($this->pdo, 'SELECT id, version FROM {{ table }} WHERE id = ?', [$id->value])[0] ?? null;
+
+        return $row === null ? null : new {{ Aggregate }}View($row->string('id'), $row->int('version'));
+    }
+
+    #[Override]
+    public function save({{ Aggregate }}View ${{ aggregate }}): void
+    {
+        $this->pdo
+            ->prepare(<<<'SQL'
+                INSERT INTO {{ table }} (id, version) VALUES (?, ?)
+                ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version
+                SQL)
+            ->execute([${{ aggregate }}->id, ${{ aggregate }}->version]);
+    }
+
+    #[Override]
+    public function init(): void
+    {
+        foreach ($this->statements() as $statement) {
+            $this->pdo->exec($statement);
+        }
+    }
+
+    #[Override]
+    public function isInitialized(): bool
+    {
+        return Row::select($this->pdo, 'SELECT to_regclass(?) IS NOT NULL AS exists', [self::TABLE])[0]->bool('exists');
+    }
+
+    #[Override]
+    public function reset(): void
+    {
+        $this->pdo->exec('TRUNCATE {{ table }}');
+    }
+
+    #[Override]
+    public function delete(): void
+    {
+        $this->pdo->exec('DROP TABLE IF EXISTS {{ table }}');
+    }
+
+    #[Override]
+    public function persist(): void
+    {
+        // Every change is written as it happens, in the transaction of the projection.
+    }
+}

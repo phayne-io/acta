@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\{{ Context }}\Application;
+
+use Acta\EventSourcing\EventStore\InMemoryEventStore;
+use App\{{ Context }}\Application\Command\{{ Name }};
+use App\{{ Context }}\Application\Command\{{ Name }}Handler;
+use App\{{ Context }}\Domain\{{ Aggregate }};
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use App\{{ Context }}\Infrastructure\Secondary\Persistence\EventSourced{{ Aggregate }}Repository;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * The {{ Name }} use case, against a repository that keeps its events in memory.
+ *
+ * This test fails until the use case is written: that is its purpose.
+ */
+#[CoversClass({{ Name }}Handler::class)]
+final class {{ Name }}HandlerTest extends TestCase
+{
+    public function testIt{{ Name }}(): void
+    {
+        $repository = new EventSourced{{ Aggregate }}Repository(new InMemoryEventStore());
+        $id = {{ Aggregate }}Id::generate();
+        $repository->save({{ Aggregate }}::create($id));
+
+        new {{ Name }}Handler($repository)(new {{ Name }}($id));
+
+        // TODO Assert what the use case changed, then that it refuses what it must refuse.
+        self::assertSame(2, $repository->get($id)->version, 'The use case is expected to record an event.');
+    }
+}

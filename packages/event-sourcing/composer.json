@@ -1,0 +1,69 @@
+{
+    "name": "acta/event-sourcing",
+    "description": "CQRS and event sourcing building blocks for PHP 8.5+: messages, buses, event store, aggregates, projections and snapshots, built on PSR interfaces only.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "cqrs",
+        "event-sourcing",
+        "event-store",
+        "ddd",
+        "hexagonal-architecture",
+        "projections",
+        "postgresql"
+    ],
+    "require": {
+        "php": "^8.5",
+        "psr/clock": "^1.0",
+        "psr/container": "^2.0",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "friendsofphp/php-cs-fixer": "^3.89",
+        "moneyphp/money": "^4.9",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.4 || ^13.0"
+    },
+    "suggest": {
+        "ext-pdo_pgsql": "Required by the PostgreSQL adapters (event store, projection store, snapshot store).",
+        "phpunit/phpunit": "Required to reuse the contract test suites shipped in Acta\\EventSourcing\\Testing."
+    },
+    "autoload": {
+        "psr-4": {
+            "Acta\\EventSourcing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Acta\\EventSourcing\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "check": [
+            "@cs",
+            "@stan",
+            "@test"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "stan": [
+            "phpstan analyse --memory-limit=1G",
+            "phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist"
+        ],
+        "test": "phpunit",
+        "test:unit": "phpunit --exclude-group postgres",
+        "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text"
+    },
+    "scripts-descriptions": {
+        "check": "Runs the coding standard, static analysis and the whole test suite.",
+        "test:unit": "Runs the tests that do not need a PostgreSQL server.",
+        "stan": "Analyses the library at the max level, then the tests.",
+        "cs:fix": "Applies the PER coding style."
+    },
+    "minimum-stability": "stable"
+}

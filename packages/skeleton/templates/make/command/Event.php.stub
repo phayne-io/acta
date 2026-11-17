@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Domain\Event;
+
+use Acta\EventSourcing\Message\DomainEvent;
+use Acta\EventSourcing\Message\MessageName;
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+
+/**
+ * TODO Say what happened, in the past tense and in the words of the business.
+ *
+ * An event holds what is needed to know what changed, and nothing that can be derived.
+ * The name below is what is stored: it cannot change once events are recorded.
+ */
+#[MessageName('{{ context }}.{{ event-kebab }}')]
+final readonly class {{ Event }} implements DomainEvent
+{
+    public function __construct(
+        public {{ Aggregate }}Id ${{ aggregate }}Id,
+    ) {}
+}

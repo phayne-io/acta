@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  title: Banking API
+  version: 1.0.0
+servers:
+  - url: https://api.example.test
+security:
+  - bearer: []
+paths:
+  /accounts:
+    post:
+      operationId: openAccount
+      summary: Opens an account
+      tags: [accounts]
+      x-command: OpenAccount
+      security:
+        - bearer: ['accounts:write']
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema: { type: string, minLength: 8 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner]
+              additionalProperties: false
+              properties:
+                owner: { type: string, minLength: 1 }
+                currency: { $ref: '#/components/schemas/Currency' }
+                type: { type: string, enum: [checking, savings] }
+      responses:
+        '201':
+          description: The account was opened.
+          headers:
+            Location: { required: true, schema: { type: string } }
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        default: { $ref: '#/components/responses/Problem' }
+    get:
+      operationId: listAccounts
+      security:
+        - bearer: ['accounts:read']
+        - apiKey: []
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: currency
+          in: query
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/Currency' }
+        - name: ids
+          in: query
+          explode: false
+          schema:
+            type: array
+            items: { type: string, format: uuid }
+        - name: tags
+          in: query
+          style: pipeDelimited
+          schema: { type: array, items: { type: string } }
+        - name: filter
+          in: query
+          style: deepObject
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              owner: { type: string }
+              minBalance: { type: integer }
+              active: { type: boolean }
+        - name: range
+          in: query
+          schema:
+            type: object
+            properties:
+              from: { type: integer }
+              to: { type: integer }
+        - name: ratio
+          in: query
+          schema: { type: number }
+        - name: cursor
+          in: query
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [after]
+                properties:
+                  after: { type: integer }
+      responses:
+        '200':
+          description: A page of accounts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, limit]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Account' }
+                  limit: { type: integer }
+        4XX: { $ref: '#/components/responses/Problem' }
+  /accounts/search:
+    get:
+      operationId: searchAccounts
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2 }
+      responses:
+        '200':
+          description: The identifiers of the matching accounts.
+          content:
+            application/json:
+              schema: { type: array, items: { type: string } }
+  /accounts/{accountId}:
+    parameters:
+      - $ref: '#/components/parameters/AccountId'
+      - name: X-Flags
+        in: header
+        schema: { type: array, items: { type: integer } }
+    get:
+      operationId: getAccount
+      parameters:
+        - name: X-Flags
+          in: header
+          required: true
+          schema: { type: array, items: { type: integer }, maxItems: 3 }
+        - name: session
+          in: cookie
+          schema: { type: string, pattern: '^[a-f0-9]+$' }
+        - name: Accept
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: The account.
+          headers:
+            ETag: { required: true, schema: { type: string, pattern: '^"\d+"$' } }
+            X-Rate-Limit: { schema: { type: integer, minimum: 0 } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '404': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: closeAccount
+      responses:
+        '204':
+          description: The account was closed.
+  /accounts/{accountId}/deposits:
+    post:
+      operationId: depositMoney
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [money]
+              properties:
+                money: { $ref: '#/components/schemas/Money' }
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                urgent: { type: boolean }
+          text/*: {}
+      responses:
+        '202':
+          description: The deposit was recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accountId, version]
+                properties:
+                  accountId: { type: string }
+                  version: { type: integer }
+  /accounts/{accountId}/statement:
+    get:
+      operationId: getStatement
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: The statement, as CSV.
+          content:
+            text/csv:
+              schema: { type: string, minLength: 1 }
+webhooks:
+  accountOpened:
+    post:
+      operationId: notifyAccountOpened
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountId, owner]
+              properties:
+                accountId: { type: string, format: uuid }
+                owner: { type: string }
+      responses:
+        2XX:
+          description: The notification was received.
+components:
+  parameters:
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Problem:
+      description: The request failed.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Currency:
+      type: string
+      enum: [EUR, USD]
+    Money:
+      type: object
+      required: [amount, currency]
+      additionalProperties: false
+      properties:
+        amount: { type: string, pattern: '^-?\d+$' }
+        currency: { $ref: '#/components/schemas/Currency' }
+    Account:
+      type: object
+      required: [id, owner, balance, version]
+      properties:
+        id: { type: string, format: uuid }
+        owner: { type: string }
+        balance: { $ref: '#/components/schemas/Money' }
+        version: { type: integer, minimum: 1 }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: Bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key

@@ -1,0 +1,24 @@
+/{{ aggregates }}/{{{ aggregate }}Id}:
+  get:
+    operationId: {{ name }}
+    summary: TODO Describe {{ name }}
+    tags: [{{ Context }}]
+    security:
+      - bearer: ['{{ context }}:read']
+    parameters:
+      - name: {{ aggregate }}Id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    responses:
+      '200':
+        description: The {{ aggregate_words }}.
+        headers:
+          ETag:
+            required: true
+            description: Version of the {{ aggregate_words }}, to send back in `If-Match`.
+            schema: { type: string }
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/{{ Aggregate }}' }
+      default: { $ref: '#/components/responses/Problem' }

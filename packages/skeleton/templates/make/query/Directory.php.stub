@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Application\Query;
+
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+
+/**
+ * Port: the read model the queries about {{ aggregate_words }} aggregates are answered from.
+ */
+interface {{ Aggregate }}Directory
+{
+    public function find({{ Aggregate }}Id $id): ?{{ Aggregate }}View;
+}

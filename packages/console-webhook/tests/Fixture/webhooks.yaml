@@ -1,0 +1,65 @@
+openapi: 3.1.0
+info:
+  title: Banking API
+  version: 1.0.0
+paths: {}
+webhooks:
+  account.opened:
+    post:
+      operationId: notifyAccountOpened
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Notification'
+                - properties:
+                    type: { const: account.opened }
+                    data:
+                      type: object
+                      required: [accountId, owner]
+                      additionalProperties: false
+                      properties:
+                        accountId: { type: string }
+                        owner: { type: string, minLength: 1 }
+      responses:
+        2XX:
+          description: The notification was received.
+  account.credited:
+    post:
+      operationId: notifyAccountCredited
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Notification'
+                - properties:
+                    data:
+                      type: object
+                      required: [accountId, amount, currency]
+                      properties:
+                        accountId: { type: string }
+                        amount: { type: string, pattern: '^\d+$' }
+                        currency: { type: string, enum: [EUR, USD] }
+      responses:
+        2XX:
+          description: The notification was received.
+  account.closed:
+    post:
+      operationId: notifyAccountClosed
+      responses:
+        2XX:
+          description: The notification was received.
+components:
+  schemas:
+    Notification:
+      type: object
+      required: [id, type, timestamp, data]
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string }
+        timestamp: { type: string, format: date-time }
+        data: { type: object }

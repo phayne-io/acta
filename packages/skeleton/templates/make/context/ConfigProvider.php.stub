@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }};
+
+use App\{{ Context }}\Infrastructure\Primary\Http\BusinessRuleMapper;
+
+/**
+ * Plugs the {{ Context }} context into the application.
+ *
+ * This file is the table of contents of the context: what it stores, which use cases it
+ * offers and through which adapters. The `make:*` generators add their entries above
+ * the `acta:` markers; keep them in place.
+ */
+final class ConfigProvider
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function __invoke(): array
+    {
+        return [
+            'dependencies' => [
+                // Ports and the adapters that implement them. Everything else is built from its constructor.
+                'aliases' => [
+                    // acta:aliases
+                ],
+                'factories' => [
+                    // acta:factories
+                ],
+            ],
+            'acta' => [
+                'events' => [
+                    // acta:events
+                ],
+                'command_handlers' => [
+                    // acta:command-handlers
+                ],
+                'query_handlers' => [
+                    // acta:query-handlers
+                ],
+                'operations' => [
+                    // acta:operations
+                ],
+                'exception_mappers' => [
+                    BusinessRuleMapper::class,
+                    // acta:exception-mappers
+                ],
+                'projections' => [
+                    // acta:projections
+                ],
+                'schemas' => [
+                    // acta:schemas
+                ],
+                'webhook_sources' => [
+                    // acta:webhook-sources
+                ],
+                'integration_events' => [
+                    // acta:integration-events
+                ],
+                'console' => [
+                    'commands' => [
+                        // acta:console-commands
+                    ],
+                ],
+                'webhooks' => [
+                    'secrets' => [
+                        // acta:webhook-secrets
+                    ],
+                ],
+            ],
+        ];
+    }
+}

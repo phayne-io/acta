@@ -1,0 +1,7 @@
+# Static analysis of the library, at the strictest level.
+parameters:
+    level: max
+    paths:
+        - src
+    tmpDir: .phpstan.cache/src
+    treatPhpDocTypesAsCertain: false

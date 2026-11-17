@@ -1,0 +1,293 @@
+openapi: 3.1.0
+info:
+  title: Acta application
+  version: 1.0.0
+  description: |
+    This document is the source of truth of the API: the server routes, authenticates
+    and validates every request against it, and checks its own responses.
+
+    Errors are RFC 9457 problem documents. A `POST` may carry an `Idempotency-Key`
+    header: retrying it with the same key returns the first response instead of doing
+    the work again.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Banking
+    description: Bank accounts.
+  # acta:tags
+security:
+  - bearer: []
+paths:
+  /accounts:
+    post:
+      operationId: openAccount
+      summary: Opens an account
+      tags: [Banking]
+      security:
+        - bearer: ['banking:write']
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner]
+              additionalProperties: false
+              properties:
+                owner: { type: string, minLength: 1, maxLength: 200 }
+                currency: { $ref: '#/components/schemas/Currency' }
+      responses:
+        '201':
+          description: The account was opened. It can be read at `Location` once the read model has caught up.
+          headers:
+            Location: { required: true, schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reference' }
+        default: { $ref: '#/components/responses/Problem' }
+    get:
+      operationId: listAccounts
+      summary: Lists accounts
+      tags: [Banking]
+      security:
+        - bearer: ['banking:read']
+      parameters:
+        - name: owner
+          in: query
+          description: Only the accounts of this owner.
+          schema: { type: string, minLength: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: The accounts, oldest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Account' }
+        default: { $ref: '#/components/responses/Problem' }
+  /accounts/{accountId}:
+    get:
+      operationId: getAccount
+      summary: Reads an account
+      tags: [Banking]
+      security:
+        - bearer: ['banking:read']
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: The account.
+          headers:
+            ETag:
+              required: true
+              description: Version of the account, to send back in `If-Match`.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        default: { $ref: '#/components/responses/Problem' }
+  /accounts/{accountId}/deposits:
+    post:
+      operationId: depositMoney
+      summary: Deposits money on an account
+      tags: [Banking]
+      security:
+        - bearer: ['banking:write']
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Money'
+                - properties:
+                    reference:
+                      type: string
+                      maxLength: 200
+                      description: What the deposit refers to outside the bank.
+      responses:
+        '204':
+          description: The money was deposited.
+        default: { $ref: '#/components/responses/Problem' }
+  /accounts/{accountId}/withdrawals:
+    post:
+      operationId: withdrawMoney
+      summary: Withdraws money from an account
+      tags: [Banking]
+      security:
+        - bearer: ['banking:write']
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Money' }
+      responses:
+        '204':
+          description: The money was withdrawn.
+        default: { $ref: '#/components/responses/Problem' }
+  # acta:paths
+webhooks:
+  account.opened:
+    post:
+      operationId: notifyAccountOpened
+      summary: An account was opened
+      tags: [Banking]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Notification'
+                - properties:
+                    type: { const: account.opened }
+                    data:
+                      type: object
+                      required: [accountId, owner, currency]
+                      additionalProperties: false
+                      properties:
+                        accountId: { type: string, format: uuid }
+                        owner: { type: string }
+                        currency: { $ref: '#/components/schemas/Currency' }
+      responses:
+        2XX: { description: The notification was received. }
+  account.credited:
+    post:
+      operationId: notifyAccountCredited
+      summary: Money was deposited on an account
+      tags: [Banking]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Notification'
+                - properties:
+                    type: { const: account.credited }
+                    data: { $ref: '#/components/schemas/AccountMovement' }
+      responses:
+        2XX: { description: The notification was received. }
+  account.debited:
+    post:
+      operationId: notifyAccountDebited
+      summary: Money was withdrawn from an account
+      tags: [Banking]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Notification'
+                - properties:
+                    type: { const: account.debited }
+                    data: { $ref: '#/components/schemas/AccountMovement' }
+      responses:
+        2XX: { description: The notification was received. }
+  # acta:webhooks
+components:
+  parameters:
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      description: The `ETag` of the resource as it was last read. The request is refused when the resource has changed since.
+      schema: { type: string }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      description: A key of the client's choosing that makes a retry of this request safe.
+      schema: { type: string, minLength: 1, maxLength: 255 }
+    # acta:parameters
+  responses:
+    Problem:
+      description: The request failed.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+    Reference:
+      type: object
+      description: Points to a resource that was just created.
+      required: [id]
+      properties:
+        id: { type: string }
+    Notification:
+      type: object
+      description: The envelope of every outgoing webhook.
+      required: [id, type, timestamp, data]
+      properties:
+        id: { type: string, description: Identifier of the event. The same event is never notified under two identifiers. }
+        type: { type: string }
+        timestamp: { type: string, format: date-time }
+        data: { type: object }
+    Currency:
+      type: string
+      description: ISO 4217 currency code.
+      enum: [EUR, USD, GBP]
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: string
+          pattern: '^\d+$'
+          description: Amount in minor units, as a string to stay exact.
+        currency: { $ref: '#/components/schemas/Currency' }
+    Account:
+      type: object
+      required: [id, owner, balance, version]
+      properties:
+        id: { type: string, format: uuid }
+        owner: { type: string }
+        balance: { $ref: '#/components/schemas/Money' }
+        version: { type: integer, minimum: 1 }
+    AccountMovement:
+      type: object
+      required: [accountId, amount]
+      additionalProperties: false
+      properties:
+        accountId: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+    # acta:schemas
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: An access token issued by the identity provider, with the scopes each operation states.

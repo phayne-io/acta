@@ -1,0 +1,27 @@
+/{{ aggregates }}/{{{ aggregate }}Id}/{{ name-kebab }}:
+  post:
+    operationId: {{ name }}
+    summary: TODO Describe {{ name_words }}
+    tags: [{{ Context }}]
+    security:
+      - bearer: ['{{ context }}:write']
+    parameters:
+      - name: {{ aggregate }}Id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/IdempotencyKey'
+    # TODO Describe the body of the request, if the command needs more than the path:
+    # requestBody:
+    #   required: true
+    #   content:
+    #     application/json:
+    #       schema:
+    #         type: object
+    #         required: []
+    #         additionalProperties: false
+    #         properties: {}
+    responses:
+      '204':
+        description: TODO Say what was done.
+      default: { $ref: '#/components/responses/Problem' }

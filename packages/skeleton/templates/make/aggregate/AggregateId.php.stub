@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Domain;
+
+use Acta\EventSourcing\Aggregate\AggregateId;
+
+/**
+ * Identifies a {{ aggregate_words }}.
+ */
+final readonly class {{ Aggregate }}Id extends AggregateId {}

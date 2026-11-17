@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Domain;
+
+/**
+ * Port: where {{ aggregate_words }} aggregates are kept.
+ *
+ * The domain states what it needs; the adapter in `Infrastructure\Secondary` decides
+ * that they are streams of events.
+ */
+interface {{ Aggregate }}Repository
+{
+    /**
+     * Returns a {{ aggregate_words }} as it stands now. Asking for one that does not exist
+     * is an error, which the adapter raises and the primary adapters report as "not found".
+     */
+    public function get({{ Aggregate }}Id $id): {{ Aggregate }};
+
+    /**
+     * Records what happened to a {{ aggregate_words }} since it was loaded. It fails when
+     * it changed in the meantime, which the primary adapters report as a conflict.
+     */
+    public function save({{ Aggregate }} ${{ aggregate }}): void;
+}

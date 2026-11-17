@@ -1,0 +1,16 @@
+.git
+.github
+.env
+vendor
+data/cache/*
+data/token.json
+tests
+docs
+.phpunit.cache
+.phpstan.cache
+.php-cs-fixer.cache
+.deptrac.cache
+config/autoload/local.php
+config/autoload/*.local.php
+.infection
+infection.json5

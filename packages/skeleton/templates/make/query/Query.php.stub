@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Application\Query;
+
+use Acta\EventSourcing\Message\Query;
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+
+/**
+ * Asks for one {{ aggregate_words }}. The answer is a {@see {{ Aggregate }}View}, or
+ * `null` when there is none.
+ */
+final readonly class {{ Name }} implements Query
+{
+    public function __construct(
+        public {{ Aggregate }}Id ${{ aggregate }}Id,
+    ) {}
+}

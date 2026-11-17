@@ -1,0 +1,82 @@
+# The dependency rules of the hexagonal architecture, checked by `composer architecture`.
+#
+# Every context has the same four layers, recognised by namespace:
+#
+#     App\<Context>\Domain                    the model and its rules
+#     App\<Context>\Application               the use cases: commands, queries, ports
+#     App\<Context>\Infrastructure\Primary    what drives the application: HTTP, console, incoming webhooks
+#     App\<Context>\Infrastructure\Secondary  what the application drives: persistence, outgoing webhooks
+#
+# Dependencies point inwards. That one context does not reach into another is checked
+# by tests/Architecture/ContextIsolationTest.php.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Domain
+      collectors:
+        - { type: classLike, value: '^App\\(?!Platform\\|Shared\\)[^\\]+\\Domain\\.*' }
+    - name: Application
+      collectors:
+        - { type: classLike, value: '^App\\(?!Platform\\|Shared\\)[^\\]+\\Application\\.*' }
+    - name: Primary
+      collectors:
+        - { type: classLike, value: '^App\\(?!Platform\\|Shared\\)[^\\]+\\Infrastructure\\Primary\\.*' }
+    - name: Secondary
+      collectors:
+        - { type: classLike, value: '^App\\(?!Platform\\|Shared\\)[^\\]+\\Infrastructure\\Secondary\\.*' }
+    - name: Wiring
+      collectors:
+        - { type: classLike, value: '^App\\(?!Platform\\|Shared\\)[^\\]+\\ConfigProvider$' }
+    - name: Shared
+      collectors:
+        - { type: classLike, value: '^App\\Shared\\.*' }
+    - name: Platform
+      collectors:
+        - { type: classLike, value: '^App\\Platform\\.*' }
+
+    # What the layers may be built with.
+    - name: EventSourcingModel
+      collectors:
+        - { type: classLike, value: '^Acta\\EventSourcing\\(Aggregate|Message)\\.*' }
+    - name: EventSourcing
+      collectors:
+        - { type: classLike, value: '^Acta\\EventSourcing\\(?!Aggregate\\|Message\\).*' }
+    - name: Http
+      collectors:
+        - { type: classLike, value: '^Acta\\Http\\.*' }
+    - name: Oidc
+      collectors:
+        - { type: classLike, value: '^Acta\\Oidc\\.*' }
+    - name: Webhook
+      collectors:
+        - { type: classLike, value: '^Acta\\Webhook\\.*' }
+    - name: Console
+      collectors:
+        - { type: classLike, value: '^(Acta\\Console|Symfony\\Component\\Console)\\.*' }
+    - name: Money
+      collectors:
+        - { type: classLike, value: '^Money\\.*' }
+    - name: Psr
+      collectors:
+        - { type: classLike, value: '^Psr\\.*' }
+    - name: Sql
+      collectors:
+        - { type: classLike, value: '^(PDO|PDOStatement|PDOException|Pdo\\.*)$' }
+    - name: Framework
+      collectors:
+        - { type: classLike, value: '^(Laminas\\|Mezzio\\|GuzzleHttp\\|Symfony\\Component\\(?!Console\\)).*' }
+
+  ruleset:
+    # The domain is plain PHP, aggregates, messages and value objects.
+    Domain: [EventSourcingModel, Money]
+    # Use cases know the domain and state their needs as ports. No HTTP, no SQL, no framework.
+    Application: [Domain, Shared, EventSourcingModel, EventSourcing, Money]
+    Shared: [EventSourcingModel, EventSourcing]
+    # Primary adapters translate the outside into commands and queries.
+    Primary: [Application, Domain, Platform, EventSourcingModel, EventSourcing, Http, Oidc, Webhook, Console, Money, Psr]
+    # Secondary adapters implement the ports.
+    Secondary: [Application, Domain, Platform, EventSourcingModel, EventSourcing, Webhook, Console, Money, Psr, Sql]
+    Wiring: [Domain, Application, Primary, Secondary, Platform]
+    # The platform wires the libraries and knows no context.
+    Platform: [Shared, EventSourcingModel, EventSourcing, Http, Oidc, Webhook, Console, Psr, Sql, Framework]

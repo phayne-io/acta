@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Infrastructure\Primary\Console;
+
+use Acta\Console\ConsoleMetadata;
+use Acta\EventSourcing\Bus\CommandBus;
+use App\{{ Context }}\Application\Command\{{ Name }};
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use Override;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+/**
+ * Primary adapter: {{ name_words }}, from the command line.
+ *
+ * It dispatches the same command as the `{{ name }}` operation of the API: a use case
+ * has one implementation, whatever drives it. Delete this class if the use case has no
+ * place on the command line, and its line in the `ConfigProvider` of the context.
+ */
+#[AsCommand('{{ context }}:{{ name-kebab }}', 'TODO Describe {{ name_words }}')]
+final class {{ Name }}Command extends Command
+{
+    public function __construct(
+        private readonly CommandBus $commands,
+    ) {
+        parent::__construct();
+    }
+
+    #[Override]
+    protected function configure(): void
+    {
+        $this->addArgument('{{ aggregate-kebab }}', InputArgument::REQUIRED, 'Identifier of the {{ aggregate_words }}');
+    }
+
+    #[Override]
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $id = $input->getArgument('{{ aggregate-kebab }}');
+
+        $this->commands->dispatch(
+            new {{ Name }}({{ Aggregate }}Id::fromString(is_string($id) ? $id : '')),
+            // Who acts, for the audit trail: the person logged in on this machine.
+            ConsoleMetadata::create(),
+        );
+
+        new SymfonyStyle($input, $output)->success('Done.');
+
+        return self::SUCCESS;
+    }
+}

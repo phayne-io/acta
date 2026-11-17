@@ -1,0 +1,25 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    // Mutation testing of what holds the business: the domain and the application of
+    // each context, and what they share. The adapters are covered by the end-to-end tests.
+    "source": {
+        "directories": ["src"],
+        "excludes": ["Platform", "Infrastructure", "ConfigProvider.php"]
+    },
+    "testFramework": "phpunit",
+    "testFrameworkOptions": "--testsuite=contexts",
+    "mutators": {
+        "@default": true,
+        // `condition || throw …;` is a statement: negating its value changes nothing.
+        "LogicalOrNegation": {
+            "ignoreSourceCodeByRegex": [".*\\|\\| throw .*"]
+        }
+    },
+    "logs": {
+        "text": ".infection/infection.log"
+    },
+    "tmpDir": ".infection",
+    // The build fails when mutants escape: a rule no test would miss is a rule no test checks.
+    "minMsi": 90,
+    "minCoveredMsi": 95
+}

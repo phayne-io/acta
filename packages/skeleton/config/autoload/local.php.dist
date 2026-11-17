@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Overrides for this machine. Copy to local.php, which is not committed.
+ */
+return [
+    'debug' => true,
+
+    'acta' => [
+        'projections_after_command' => ['banking_accounts', 'webhooks'],
+
+        'http' => [
+            'response_validation' => 'fail',
+        ],
+
+        'webhooks' => [
+            'subscriptions' => [
+                // ['id' => 'local', 'url' => 'http://localhost:9000/hook', 'secret' => 'whsec_bG9jYWw=', 'allow_insecure' => true],
+            ],
+        ],
+    ],
+];
