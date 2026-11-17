@@ -1,0 +1,155 @@
+# MyBank, the application in packages/skeleton, run locally over HTTPS with Keycloak as
+# the identity provider. `make up` starts it; see README.md.
+#
+#     https://api.mybank.io     the API
+#     https://auth.mybank.io    Keycloak (realm "mybank")
+#
+# nginx terminates TLS for both names with a certificate made by mkcert (`make certs`).
+# Inside the Compose network the two names resolve to nginx as well, so that the API
+# reaches Keycloak at the very address tokens name as their issuer.
+
+name: mybank
+
+x-app: &app
+  build:
+    context: ../packages/skeleton
+    target: dev
+  # Trusts the mkcert authority before running the command.
+  entrypoint: ["/docker/php/entrypoint.sh"]
+  working_dir: /acta/packages/skeleton
+  environment:
+    APP_DEBUG: "1"
+    DATABASE_DSN: pgsql:host=database;port=5432;dbname=app
+    DATABASE_USER: app
+    DATABASE_PASSWORD: app
+    # The workers below keep the read models up to date.
+    PROJECTIONS_AFTER_COMMAND: ""
+    HTTP_RESPONSE_VALIDATION: fail
+    OIDC_ISSUER: https://auth.mybank.io/realms/mybank
+    OIDC_AUDIENCE: mybank-api
+    OIDC_ALLOW_INSECURE: "0"
+    OIDC_CLIENT_ID: mybank-console
+    WEBHOOK_PAYMENTS_SECRET: whsec_Y2hhbmdlLW1lLWluLXByb2R1Y3Rpb24=
+    LOG_LEVEL: info
+  volumes:
+    # The whole repository: the application installs the libraries as symbolic links to ../.
+    - ..:/acta
+    - ./php:/docker/php:ro
+    - ./certs/rootCA.pem:/usr/local/share/ca-certificates/mkcert.crt:ro
+  tmpfs:
+    # The compiled contract and the cached keys of Keycloak stay out of the working copy.
+    - /acta/packages/skeleton/data/cache:mode=1777
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  # --- The entry point -----------------------------------------------------------------
+  web:
+    image: nginx:1-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/mybank.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ../packages/skeleton/public:/acta/packages/skeleton/public:ro
+    networks:
+      default:
+        aliases:
+          - api.mybank.io
+          - auth.mybank.io
+    depends_on:
+      - api
+      - keycloak
+    restart: unless-stopped
+
+  # --- The application -----------------------------------------------------------------
+  api:
+    <<: *app
+    command: php-fpm
+    restart: unless-stopped
+
+  # Creates the tables that do not exist yet, then exits.
+  migrate:
+    <<: *app
+    command: bin/console es:migrate
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: "no"
+
+  # Read models and the webhook outbox follow the event log: one process per projection.
+  projector-accounts:
+    <<: *app
+    command: bin/console projection:run banking_accounts
+    restart: unless-stopped
+
+  projector-webhooks:
+    <<: *app
+    command: bin/console projection:run webhooks
+    restart: unless-stopped
+
+  # Sends the queued webhooks to their subscribers, with retries.
+  webhook-sender:
+    <<: *app
+    command: bin/console webhook:deliver --watch
+    restart: unless-stopped
+
+  # --- What it depends on --------------------------------------------------------------
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - "${DATABASE_PORT:-54320}:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "app", "-d", "app"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  # The identity provider. The realm in keycloak/ is imported on the first start; later
+  # changes made in the admin console live in the database.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://database:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      # The public address: what tokens carry as "iss", whoever asks and from wherever.
+      KC_HOSTNAME: https://auth.mybank.io
+      # nginx terminates TLS and says so in the X-Forwarded-* headers.
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/mybank-realm.json:/opt/keycloak/data/import/mybank-realm.json:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      # The image has no curl: speak HTTP to the management port with bash alone.
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000
+          && printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3
+          && grep -q '"status": "UP"' <&3
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  database:
