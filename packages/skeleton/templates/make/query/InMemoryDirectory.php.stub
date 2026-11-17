@@ -1,0 +1,54 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Infrastructure\Secondary\Persistence;
+
+use App\{{ Context }}\Application\Query\{{ Aggregate }}View;
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use Override;
+
+/**
+ * Secondary adapter: the read model kept in the process, for tests.
+ */
+final class InMemory{{ Aggregate }}Directory implements Writable{{ Aggregate }}Directory
+{
+    /** @var array<string, {{ Aggregate }}View> */
+    private array $views = [];
+
+    #[Override]
+    public function find({{ Aggregate }}Id $id): ?{{ Aggregate }}View
+    {
+        return $this->views[$id->value] ?? null;
+    }
+
+    #[Override]
+    public function save({{ Aggregate }}View ${{ aggregate }}): void
+    {
+        $this->views[${{ aggregate }}->id] = ${{ aggregate }};
+    }
+
+    #[Override]
+    public function init(): void {}
+
+    #[Override]
+    public function isInitialized(): bool
+    {
+        return true;
+    }
+
+    #[Override]
+    public function reset(): void
+    {
+        $this->views = [];
+    }
+
+    #[Override]
+    public function delete(): void
+    {
+        $this->views = [];
+    }
+
+    #[Override]
+    public function persist(): void {}
+}

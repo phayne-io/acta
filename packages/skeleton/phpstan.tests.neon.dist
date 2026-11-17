@@ -1,0 +1,9 @@
+# Static analysis of the tests, one level below the application: decoded JSON bodies
+# are plain arrays, and asserting the type of each of their values would only add noise.
+parameters:
+    level: 8
+    paths:
+        - tests
+    tmpDir: .phpstan.cache/tests
+    treatPhpDocTypesAsCertain: false
+    rememberPossiblyImpureFunctionValues: false

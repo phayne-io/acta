@@ -1,0 +1,56 @@
+name: oidc
+
+on:
+  push:
+    paths:
+      - 'packages/oidc/**'
+      - '.github/workflows/oidc.yml'
+  pull_request:
+    paths:
+      - 'packages/oidc/**'
+      - '.github/workflows/oidc.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: packages/oidc
+
+jobs:
+  quality:
+    name: Coding standard and static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: openssl, sodium
+          coverage: none
+      - run: composer validate --strict --no-check-lock
+      - run: composer install --no-interaction --no-progress
+      - name: PSR-4
+        run: composer dump-autoload --optimize --strict-psr
+      - name: PER coding style
+        run: composer cs
+      - name: PHPStan
+        run: composer stan
+
+  tests:
+    name: Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.php == '8.6' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5', '8.6']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: openssl, sodium
+          coverage: none
+      - run: composer install --no-interaction --no-progress
+      - run: composer test

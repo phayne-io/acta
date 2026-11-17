@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\{{ Context }}\Domain;
+
+use Acta\EventSourcing\Testing\AggregateScenario;
+use App\{{ Context }}\Domain\{{ Aggregate }};
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use App\{{ Context }}\Domain\Event\{{ Aggregate }}Created;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * The rules of {{ Aggregate }}, told as scenarios: given what happened, when something
+ * is asked, then this happens — or it is refused.
+ */
+#[CoversClass({{ Aggregate }}::class)]
+final class {{ Aggregate }}Test extends TestCase
+{
+    public function testItIsCreated(): void
+    {
+        $id = {{ Aggregate }}Id::generate();
+
+        AggregateScenario::for({{ Aggregate }}::class)
+            ->when(static fn(): {{ Aggregate }} => {{ Aggregate }}::create($id))
+            ->then(new {{ Aggregate }}Created($id));
+
+        $this->addToAssertionCount(1);
+    }
+}

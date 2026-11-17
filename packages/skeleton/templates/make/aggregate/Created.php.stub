@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Domain\Event;
+
+use Acta\EventSourcing\Message\DomainEvent;
+use Acta\EventSourcing\Message\MessageName;
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+
+/**
+ * A {{ aggregate_words }} came to exist.
+ *
+ * The name below is what is stored: the class can be renamed and moved, the name cannot
+ * change once events are recorded.
+ */
+#[MessageName('{{ context }}.{{ aggregate-kebab }}-created')]
+final readonly class {{ Aggregate }}Created implements DomainEvent
+{
+    public function __construct(
+        public {{ Aggregate }}Id ${{ aggregate }}Id,
+    ) {}
+}

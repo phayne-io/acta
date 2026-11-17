@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: Banking API
+  version: 1.0.0
+security:
+  - bearer: []
+paths:
+  /accounts:
+    post:
+      operationId: openAccount
+      security:
+        - bearer: ['accounts:write']
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner]
+              additionalProperties: false
+              properties:
+                owner: { type: string, minLength: 1 }
+                currency: { $ref: '#/components/schemas/Currency' }
+      responses:
+        '201':
+          description: The account was opened.
+          headers:
+            Location: { required: true, schema: { type: string } }
+            ETag: { required: true, schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        default: { $ref: '#/components/responses/Problem' }
+  /accounts/{accountId}:
+    get:
+      operationId: getAccount
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: The account.
+          headers:
+            ETag: { required: true, schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        default: { $ref: '#/components/responses/Problem' }
+  /accounts/{accountId}/deposits:
+    post:
+      operationId: depositMoney
+      security:
+        - bearer: ['accounts:write']
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - name: If-Match
+          in: header
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Money' }
+      responses:
+        '200':
+          description: The account after the deposit.
+          headers:
+            ETag: { required: true, schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  parameters:
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Problem:
+      description: The request failed.
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required: [type, title, status]
+            properties:
+              type: { type: string }
+              title: { type: string }
+              status: { type: integer }
+              detail: { type: string }
+  schemas:
+    Currency:
+      type: string
+      enum: [EUR, USD]
+    Money:
+      type: object
+      required: [amount, currency]
+      additionalProperties: false
+      properties:
+        amount:
+          type: string
+          pattern: '^-?\d+$'
+          description: Amount in minor units, as a string to stay exact.
+        currency: { $ref: '#/components/schemas/Currency' }
+    Account:
+      type: object
+      required: [id, owner, balance, version]
+      properties:
+        id: { type: string, format: uuid }
+        owner: { type: string }
+        balance: { $ref: '#/components/schemas/Money' }
+        version: { type: integer, minimum: 1 }
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

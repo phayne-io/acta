@@ -1,0 +1,118 @@
+name: skeleton
+
+on:
+  push:
+    paths:
+      - 'packages/**'
+      - '.github/workflows/skeleton.yml'
+  pull_request:
+    paths:
+      - 'packages/**'
+      - '.github/workflows/skeleton.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: packages/skeleton
+
+jobs:
+  quality:
+    name: Coding standard, static analysis, architecture and contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, bcmath, pcntl, sodium
+          coverage: none
+      - run: composer validate --strict --no-check-lock
+      - run: composer install --no-interaction --no-progress
+      - name: PSR-4
+        run: composer dump-autoload --optimize --strict-psr
+      - name: PER coding style
+        run: composer cs
+      - name: PHPStan
+        run: |
+          composer stan
+          vendor/bin/phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist
+      - name: Layers of the hexagonal architecture
+        run: composer architecture
+      - name: OpenAPI contract
+        run: composer lint:contract
+
+  tests:
+    name: Tests (PHP ${{ matrix.php }}, PostgreSQL ${{ matrix.postgres }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.php == '8.6' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5', '8.6']
+        postgres: ['14', '18']
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app_test"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_pgsql, bcmath, pcntl, sodium
+          coverage: none
+      # moneyphp/money pins the PHP minors it supports.
+      - run: composer install --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php' || '' }}
+      - run: composer test
+
+  mutation:
+    name: Mutation testing of the domain and the application
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, bcmath, pcntl, sodium
+          coverage: xdebug
+      - run: composer install --no-interaction --no-progress
+      - run: composer mutation
+
+  generators:
+    name: The code the generators write passes the same checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, bcmath, pcntl, sodium
+          coverage: none
+      - run: composer install --no-interaction --no-progress
+      - name: Scaffold a context
+        run: |
+          bin/console make:context Scaffolded
+          bin/console make:aggregate Scaffolded Thing
+          bin/console make:command Scaffolded ChangeThing --event ThingChanged
+          bin/console make:query Scaffolded GetThing
+          bin/console make:webhook Scaffolded partner
+      - run: composer dump-autoload --optimize --strict-psr
+      - run: composer cs
+      - run: composer stan
+      - run: vendor/bin/phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist
+      - run: composer architecture
+      - run: composer lint:contract
+      - name: Everything passes but the tests that wait for the business rules
+        run: vendor/bin/phpunit --exclude-filter 'ChangeThingHandlerTest|PartnerTranslatorTest'

@@ -1,0 +1,10 @@
+# Static analysis of the application, at the strictest level.
+parameters:
+    level: max
+    paths:
+        - src
+    tmpDir: .phpstan.cache/src
+    treatPhpDocTypesAsCertain: false
+    # Stores and read models are read again after being written to: their answers must
+    # not be assumed stable between two calls.
+    rememberPossiblyImpureFunctionValues: false

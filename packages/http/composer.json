@@ -1,0 +1,89 @@
+{
+    "name": "acta/http",
+    "description": "Contract-first HTTP adapter for PHP 8.5+: an OpenAPI 3.1 contract drives routing, security, request and response validation, with RFC 9457 errors, on PSR-7, PSR-15 and PSR-17.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "openapi",
+        "openapi-3.1",
+        "psr-7",
+        "psr-15",
+        "psr-17",
+        "middleware",
+        "validation",
+        "problem-details",
+        "rfc9457",
+        "hexagonal-architecture"
+    ],
+    "require": {
+        "php": "^8.5",
+        "opis/json-schema": "^2.6",
+        "psr/clock": "^1.0",
+        "psr/container": "^2.0",
+        "psr/http-factory": "^1.1",
+        "psr/http-message": "^2.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "acta/event-sourcing": "@dev",
+        "friendsofphp/php-cs-fixer": "^3.89",
+        "laminas/laminas-diactoros": "^3.8",
+        "moneyphp/money": "^4.9",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.4 || ^13.0",
+        "symfony/yaml": "^7.4 || ^8.0"
+    },
+    "suggest": {
+        "acta/event-sourcing": "Enables the bridge in Acta\\Http\\EventSourcing: messages built from validated input, metadata, If-Match, error mapping.",
+        "ext-pdo_pgsql": "Required by the PostgreSQL idempotency store.",
+        "ext-yaml": "Reads YAML contracts, as an alternative to symfony/yaml.",
+        "phpunit/phpunit": "Required to reuse the contract assertions shipped in Acta\\Http\\Testing.",
+        "symfony/yaml": "Reads YAML contracts. Not needed at runtime once the contract is compiled to PHP."
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../event-sourcing"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Acta\\Http\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Acta\\Http\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "check": [
+            "@cs",
+            "@stan",
+            "@test"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "stan": [
+            "phpstan analyse --memory-limit=1G",
+            "phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist"
+        ],
+        "test": "phpunit",
+        "test:unit": "phpunit --exclude-group postgres",
+        "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text"
+    },
+    "scripts-descriptions": {
+        "check": "Runs the coding standard, static analysis and the whole test suite.",
+        "test:unit": "Runs the tests that do not need a PostgreSQL server.",
+        "stan": "Analyses the library at the max level, then the tests.",
+        "cs:fix": "Applies the PER coding style."
+    },
+    "minimum-stability": "stable"
+}

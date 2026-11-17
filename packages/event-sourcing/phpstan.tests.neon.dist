@@ -1,0 +1,12 @@
+# Static analysis of the tests. One level below the library: projection states are plain
+# arrays, and asserting the type of each of their values in every test handler would
+# only add noise.
+parameters:
+    level: 8
+    paths:
+        - tests
+    tmpDir: .phpstan.cache/tests
+    treatPhpDocTypesAsCertain: false
+    # Stores are read again after other objects wrote to them: their answers must not be
+    # assumed stable between two calls.
+    rememberPossiblyImpureFunctionValues: false

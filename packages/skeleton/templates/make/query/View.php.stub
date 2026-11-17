@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Application\Query;
+
+/**
+ * A {{ aggregate_words }} as the read side knows it: what queries answer with.
+ *
+ * It is built from events by a projection and may be a few moments behind the latest
+ * write. Shape it for its readers, not after the aggregate.
+ */
+final readonly class {{ Aggregate }}View
+{
+    /**
+     * @param int $version version of the aggregate this view reflects
+     */
+    public function __construct(
+        public string $id,
+        public int $version,
+    ) {}
+}

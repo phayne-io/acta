@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Application\Command;
+
+use Acta\EventSourcing\Bus\Handles;
+use App\{{ Context }}\Domain\{{ Aggregate }}Repository;
+use LogicException;
+
+/**
+ * Use case: {{ name_words }}.
+ *
+ * A handler orchestrates and decides nothing: it loads the aggregate, asks it to do
+ * what the command says and saves it. The rule belongs to the {{ Aggregate }} aggregate.
+ */
+final readonly class {{ Name }}Handler
+{
+    public function __construct(
+        private {{ Aggregate }}Repository ${{ aggregate }}Repository,
+    ) {}
+
+    #[Handles]
+    public function __invoke({{ Name }} $command): void
+    {
+        ${{ aggregate }} = $this->{{ aggregate }}Repository->get($command->{{ aggregate }}Id);
+
+        // TODO Replace the next statement with a call to the method of {{ Aggregate }} that carries
+        // the rule, followed by: $this->{{ aggregate }}Repository->save(${{ aggregate }});
+        throw new LogicException(sprintf(
+            '{{ Name }} is not implemented yet: {{ aggregate_words }} "%s" is left as it is.',
+            ${{ aggregate }}->aggregateId(),
+        ));
+    }
+}

@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Application\Command;
+
+use Acta\EventSourcing\Message\Command;
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+
+/**
+ * TODO Say what this asks for, in the words of the business.
+ *
+ * A command is a plain message: what is asked and the data needed to decide, with the
+ * types of the domain. Its properties are filled from the path, the query and the body
+ * of the request, by name.
+ */
+final readonly class {{ Name }} implements Command
+{
+    public function __construct(
+        public {{ Aggregate }}Id ${{ aggregate }}Id,
+    ) {}
+}

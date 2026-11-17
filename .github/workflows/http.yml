@@ -1,0 +1,78 @@
+name: http
+
+on:
+  push:
+    paths:
+      - 'packages/http/**'
+      - 'packages/event-sourcing/src/**'
+      - '.github/workflows/http.yml'
+  pull_request:
+    paths:
+      - 'packages/http/**'
+      - 'packages/event-sourcing/src/**'
+      - '.github/workflows/http.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: packages/http
+
+jobs:
+  quality:
+    name: Coding standard and static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, bcmath
+          coverage: none
+      - run: composer validate --strict --no-check-lock
+      - run: composer install --no-interaction --no-progress
+      - name: PSR-4
+        run: composer dump-autoload --optimize --strict-psr
+      - name: PER coding style
+        run: composer cs
+      - name: PHPStan
+        run: composer stan
+
+  tests:
+    name: Tests (PHP ${{ matrix.php }}, PostgreSQL ${{ matrix.postgres }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.php == '8.6' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5', '8.6']
+        postgres: ['14', '18']
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_USER: acta
+          POSTGRES_PASSWORD: acta
+          POSTGRES_DB: acta_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U acta -d acta_test"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+    env:
+      ACTA_TEST_POSTGRES_DSN: pgsql:host=127.0.0.1;port=5432;dbname=acta_test
+      ACTA_TEST_POSTGRES_USER: acta
+      ACTA_TEST_POSTGRES_PASSWORD: acta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_pgsql, pcntl, posix, bcmath
+          coverage: none
+      # moneyphp/money, used by the examples and the tests, pins the PHP minors it supports.
+      - run: composer install --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php' || '' }}
+      - run: composer test

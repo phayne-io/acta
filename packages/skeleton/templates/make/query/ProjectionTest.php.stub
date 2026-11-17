@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\{{ Context }}\Infrastructure;
+
+use Acta\EventSourcing\EventStore\InMemoryEventStore;
+use Acta\EventSourcing\Projection\InMemoryProjectionStore;
+use Acta\EventSourcing\Projection\ProjectionManager;
+use Acta\EventSourcing\Projection\ProjectionOptions;
+use App\{{ Context }}\Domain\{{ Aggregate }};
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use App\{{ Context }}\Infrastructure\Secondary\Persistence\{{ Aggregate }}DirectoryProjection;
+use App\{{ Context }}\Infrastructure\Secondary\Persistence\EventSourced{{ Aggregate }}Repository;
+use App\{{ Context }}\Infrastructure\Secondary\Persistence\InMemory{{ Aggregate }}Directory;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * What readers see of a {{ Aggregate }} once its events are projected.
+ */
+#[CoversClass({{ Aggregate }}DirectoryProjection::class)]
+final class {{ Aggregate }}DirectoryProjectionTest extends TestCase
+{
+    public function testItShowsWhatWasCreated(): void
+    {
+        $eventStore = new InMemoryEventStore();
+        $directory = new InMemory{{ Aggregate }}Directory();
+        $id = {{ Aggregate }}Id::generate();
+        new EventSourced{{ Aggregate }}Repository($eventStore)->save({{ Aggregate }}::create($id));
+
+        new {{ Aggregate }}DirectoryProjection($directory)
+            ->build(new ProjectionManager($eventStore, new InMemoryProjectionStore()), {{ Aggregate }}DirectoryProjection::NAME, new ProjectionOptions())
+            ->run(keepRunning: false);
+
+        self::assertSame(1, $directory->find($id)?->version);
+    }
+}

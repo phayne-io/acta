@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Infrastructure\Secondary\Persistence;
+
+use Acta\EventSourcing\Projection\ReadModel;
+use App\{{ Context }}\Application\Query\{{ Aggregate }}Directory;
+use App\{{ Context }}\Application\Query\{{ Aggregate }}View;
+
+/**
+ * The read model as its projection sees it: something to write to.
+ *
+ * The application only knows {@see {{ Aggregate }}Directory}, which reads.
+ */
+interface Writable{{ Aggregate }}Directory extends {{ Aggregate }}Directory, ReadModel
+{
+    /**
+     * Stores a view, replacing what was known under its identifier.
+     */
+    public function save({{ Aggregate }}View ${{ aggregate }}): void;
+}

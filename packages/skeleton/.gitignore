@@ -1,0 +1,12 @@
+/vendor/
+/data/cache/*
+!/data/cache/.gitkeep
+/data/token.json
+/config/autoload/*.local.php
+/config/autoload/local.php
+/.env
+/.phpunit.cache/
+/.phpstan.cache/
+/.php-cs-fixer.cache
+/.deptrac.cache
+/.infection/

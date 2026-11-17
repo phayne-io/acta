@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Domain;
+
+use Acta\EventSourcing\Aggregate\AggregateRoot;
+use Acta\EventSourcing\Message\DomainEvent;
+use App\{{ Context }}\Domain\Event\{{ Aggregate }}Created;
+use Override;
+
+/**
+ * TODO Say what a {{ aggregate_words }} is, in the words of the business.
+ *
+ * The aggregate is where the rules live. A public method checks a rule and records the
+ * event that says what happened; {@see apply()} is the only place where state changes,
+ * which is what lets the aggregate be rebuilt from its events.
+ *
+ * Keep it free of HTTP, SQL and the framework.
+ */
+final class {{ Aggregate }} extends AggregateRoot
+{
+    public private(set) {{ Aggregate }}Id $id;
+
+    private function __construct() {}
+
+    /**
+     * TODO Name this after what the business calls it (open, register, issue…) and give
+     * it what a {{ aggregate_words }} needs to exist.
+     */
+    public static function create({{ Aggregate }}Id $id): self
+    {
+        return new self()->recordThat(new {{ Aggregate }}Created($id));
+    }
+
+    #[Override]
+    public function aggregateId(): string
+    {
+        return $this->id->value;
+    }
+
+    #[Override]
+    protected function apply(DomainEvent $event): void
+    {
+        match (true) {
+            $event instanceof {{ Aggregate }}Created => $this->id = $event->{{ aggregate }}Id,
+            default => null,
+        };
+    }
+}

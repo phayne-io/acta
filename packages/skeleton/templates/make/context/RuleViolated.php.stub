@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Domain\Exception;
+
+use DomainException;
+
+/**
+ * A rule of the {{ Context }} context was not respected: the request is understood and
+ * is refused.
+ *
+ * Give each rule its own subclass. The primary adapters report them all the same way, a
+ * 422 over HTTP, so a new rule needs nothing but its exception.
+ */
+abstract class {{ Context }}RuleViolated extends DomainException {}

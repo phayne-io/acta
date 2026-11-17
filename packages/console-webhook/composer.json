@@ -1,0 +1,99 @@
+{
+    "name": "acta/console-webhook",
+    "description": "Console and webhook adapters for event-sourced PHP 8.5+ applications: operational commands, signed incoming webhooks translated to commands, and reliable outgoing webhooks with retries and dead letters.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "webhooks",
+        "standard-webhooks",
+        "hmac",
+        "outbox",
+        "console",
+        "cli",
+        "event-sourcing",
+        "hexagonal-architecture",
+        "psr-15",
+        "psr-18"
+    ],
+    "require": {
+        "php": "^8.5",
+        "acta/event-sourcing": "^1.0 || dev-main",
+        "psr/clock": "^1.0",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.1",
+        "psr/http-message": "^2.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/log": "^3.0",
+        "symfony/console": "^7.0 || ^8.0"
+    },
+    "require-dev": {
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "acta/http": "@dev",
+        "acta/oidc": "@dev",
+        "friendsofphp/php-cs-fixer": "^3.89",
+        "laminas/laminas-diactoros": "^3.8",
+        "moneyphp/money": "^4.9",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.4 || ^13.0",
+        "symfony/yaml": "^7.4 || ^8.0"
+    },
+    "suggest": {
+        "acta/http": "Enables the openapi:lint command and the validation of outgoing webhooks against the OpenAPI contract.",
+        "acta/oidc": "Enables the auth:login and auth:logout commands.",
+        "ext-pcntl": "Lets long-running commands stop cleanly on SIGINT and SIGTERM.",
+        "ext-pdo_pgsql": "Required by the PostgreSQL delivery log and delivery queue, and by the es:migrate command.",
+        "phpunit/phpunit": "Required to reuse the contract test suites shipped in Acta\\Webhook\\Testing."
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../event-sourcing"
+        },
+        {
+            "type": "path",
+            "url": "../http"
+        },
+        {
+            "type": "path",
+            "url": "../oidc"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Acta\\Console\\": "src/Console/",
+            "Acta\\Webhook\\": "src/Webhook/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Acta\\ConsoleWebhook\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "check": [
+            "@cs",
+            "@stan",
+            "@test"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "stan": [
+            "phpstan analyse --memory-limit=1G",
+            "phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist"
+        ],
+        "test": "phpunit",
+        "test:unit": "phpunit --exclude-group postgres",
+        "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text"
+    },
+    "scripts-descriptions": {
+        "check": "Runs the coding standard, static analysis and the whole test suite.",
+        "test:unit": "Runs the tests that do not need a PostgreSQL server.",
+        "stan": "Analyses the library at the max level, then the tests.",
+        "cs:fix": "Applies the PER coding style."
+    },
+    "minimum-stability": "stable"
+}

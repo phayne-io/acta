@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Infrastructure\Secondary\Persistence;
+
+use Acta\EventSourcing\Aggregate\AggregateRepository;
+use Acta\EventSourcing\EventStore\EventStore;
+use Acta\EventSourcing\Message\EnvelopeFactory;
+use Acta\EventSourcing\SystemClock;
+use App\{{ Context }}\Domain\{{ Aggregate }};
+use App\{{ Context }}\Domain\{{ Aggregate }}Id;
+use App\{{ Context }}\Domain\{{ Aggregate }}Repository;
+use Override;
+use Psr\Clock\ClockInterface;
+
+/**
+ * Secondary adapter: keeps {{ aggregate_words }} aggregates as streams of events in the
+ * event store.
+ */
+final readonly class EventSourced{{ Aggregate }}Repository implements {{ Aggregate }}Repository
+{
+    /** Category of the streams: an aggregate is the stream `{{ category }}-<id>`. */
+    public const string CATEGORY = '{{ category }}';
+
+    /** @var AggregateRepository<{{ Aggregate }}> */
+    private AggregateRepository $aggregates;
+
+    public function __construct(
+        EventStore $eventStore,
+        EnvelopeFactory $envelopes = new EnvelopeFactory(),
+        ClockInterface $clock = new SystemClock(),
+    ) {
+        $this->aggregates = new AggregateRepository({{ Aggregate }}::class, self::CATEGORY, $eventStore, $envelopes, clock: $clock);
+    }
+
+    #[Override]
+    public function get({{ Aggregate }}Id $id): {{ Aggregate }}
+    {
+        return $this->aggregates->get($id);
+    }
+
+    #[Override]
+    public function save({{ Aggregate }} ${{ aggregate }}): void
+    {
+        $this->aggregates->save(${{ aggregate }});
+    }
+}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         failOnDeprecation="true"
+         failOnNotice="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerNotices="true">
+    <testsuites>
+        <!-- One directory per context, then what spans them. -->
+        <testsuite name="contexts">
+            <directory>tests</directory>
+            <exclude>tests/Architecture</exclude>
+            <exclude>tests/Functional</exclude>
+            <exclude>tests/Platform</exclude>
+        </testsuite>
+        <testsuite name="platform">
+            <directory>tests/Platform</directory>
+        </testsuite>
+        <testsuite name="architecture">
+            <directory>tests/Architecture</directory>
+        </testsuite>
+        <testsuite name="functional">
+            <directory>tests/Functional</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <!-- Tests of the "postgres" group are skipped when this server cannot be reached. `docker compose up -d database` provides it. -->
+        <env name="TEST_DATABASE_DSN" value="pgsql:host=127.0.0.1;port=5432;dbname=app_test"/>
+        <env name="TEST_DATABASE_USER" value="app"/>
+        <env name="TEST_DATABASE_PASSWORD" value="app"/>
+    </php>
+</phpunit>

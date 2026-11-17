@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Infrastructure\Secondary\Persistence;
+
+use Acta\EventSourcing\EventStore\RecordedEvent;
+use Acta\EventSourcing\Projection\PersistentProjection;
+use Acta\EventSourcing\Projection\ProjectionManager;
+use Acta\EventSourcing\Projection\ProjectionOptions;
+use App\{{ Context }}\Application\Query\{{ Aggregate }}View;
+use App\{{ Context }}\Domain\Event\{{ Aggregate }}Created;
+use App\Platform\Projection\ProjectionDefinition;
+use Override;
+
+/**
+ * Keeps the read model of {{ aggregate_words }} aggregates up to date from their events.
+ *
+ * Registered as the `{{ table }}` projection: `bin/console projection:run {{ table }}`
+ * runs it, `projection:rebuild` replays the whole history into it.
+ */
+final readonly class {{ Aggregate }}DirectoryProjection implements ProjectionDefinition
+{
+    public const string NAME = '{{ table }}';
+
+    public function __construct(
+        private Writable{{ Aggregate }}Directory $directory,
+    ) {}
+
+    #[Override]
+    public function build(ProjectionManager $projections, string $name, ProjectionOptions $options): PersistentProjection
+    {
+        return $projections
+            ->readModelProjection($name, $this->directory, $options)
+            ->fromCategory(EventSourced{{ Aggregate }}Repository::CATEGORY)
+            ->when([
+                {{ Aggregate }}Created::class => fn(array $state, {{ Aggregate }}Created $event, RecordedEvent $recorded) => $this->directory->save(
+                    new {{ Aggregate }}View($event->{{ aggregate }}Id->value, $recorded->streamVersion),
+                ),
+                // TODO Handle the other events that change what readers see.
+            ]);
+    }
+}

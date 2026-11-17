@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\{{ Context }}\Application\Query;
+
+use Acta\EventSourcing\Bus\Handles;
+
+/**
+ * Answers {@see {{ Name }}} from the read model.
+ */
+final readonly class {{ Name }}Handler
+{
+    public function __construct(
+        private {{ Aggregate }}Directory $directory,
+    ) {}
+
+    #[Handles]
+    public function __invoke({{ Name }} $query): ?{{ Aggregate }}View
+    {
+        return $this->directory->find($query->{{ aggregate }}Id);
+    }
+}

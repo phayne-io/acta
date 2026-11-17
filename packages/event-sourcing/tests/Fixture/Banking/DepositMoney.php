@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Acta\EventSourcing\Tests\Fixture\Banking;
+
+use Acta\EventSourcing\Message\Command;
+use Money\Money;
+
+final readonly class DepositMoney implements Command
+{
+    public function __construct(
+        public AccountId $accountId,
+        public Money $money,
+    ) {}
+}
