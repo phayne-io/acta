@@ -17,10 +17,10 @@
         "ext-bcmath": "*",
         "ext-pdo": "*",
         "ext-pdo_pgsql": "*",
-        "acta/console-webhook": "^1.0 || dev-main",
-        "acta/event-sourcing": "^1.0 || dev-main",
-        "acta/http": "^1.0 || dev-main",
-        "acta/oidc": "^1.0 || dev-main",
+        "acta/console-webhook": "^1.0@dev",
+        "acta/event-sourcing": "^1.0@dev",
+        "acta/http": "^1.0@dev",
+        "acta/oidc": "^1.0@dev",
         "guzzlehttp/guzzle": "^7.9 || ^8.0",
         "laminas/laminas-config-aggregator": "^1.21",
         "laminas/laminas-diactoros": "^3.8",
@@ -52,19 +52,39 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../event-sourcing"
+            "url": "../event-sourcing",
+            "options": {
+                "versions": {
+                    "acta/event-sourcing": "1.0.x-dev"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../http"
+            "url": "../http",
+            "options": {
+                "versions": {
+                    "acta/http": "1.0.x-dev"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../oidc"
+            "url": "../oidc",
+            "options": {
+                "versions": {
+                    "acta/oidc": "1.0.x-dev"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../console-webhook"
+            "url": "../console-webhook",
+            "options": {
+                "versions": {
+                    "acta/console-webhook": "1.0.x-dev"
+                }
+            }
         }
     ],
     "autoload": {
