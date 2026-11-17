@@ -107,7 +107,9 @@ final class ResponseValidatorTest extends HttpTestCase
             ['[header Content-Type] "text/plain" is not declared for status 200; expected application/json.'],
             self::violations('getAccount', $text),
         );
-        self::assertSame(['[body] The body is not valid JSON: Syntax error.'], self::violations('getAccount', $broken));
+        // PHP words the reason itself, and adds the position of the error from 8.6 on.
+        self::assertCount(1, self::violations('getAccount', $broken));
+        self::assertStringStartsWith('[body] The body is not valid JSON: Syntax error', self::violations('getAccount', $broken)[0]);
         self::assertSame(
             ['[body] No body is declared for status 204.'],
             self::violations('closeAccount', self::responder()->json(['closed' => true], 204)),

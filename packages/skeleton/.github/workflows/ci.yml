@@ -11,9 +11,9 @@ permissions:
 jobs:
   quality:
     name: Coding standard, static analysis, architecture and contract
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
@@ -36,7 +36,7 @@ jobs:
 
   tests:
     name: Tests (PHP ${{ matrix.php }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     continue-on-error: ${{ matrix.php == '8.6' }}
     strategy:
       fail-fast: false
@@ -57,7 +57,7 @@ jobs:
           --health-timeout 2s
           --health-retries 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -69,9 +69,9 @@ jobs:
 
   mutation:
     name: Mutation testing of the domain and the application
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
@@ -82,9 +82,9 @@ jobs:
 
   generators:
     name: The code the generators write passes the same checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
@@ -109,9 +109,9 @@ jobs:
 
   image:
     name: Production image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: docker build --target prod --tag app:ci .
       - name: The image lists its console commands
         run: docker run --rm app:ci bin/console list
