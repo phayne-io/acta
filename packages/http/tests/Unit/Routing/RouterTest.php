@@ -6,10 +6,10 @@ namespace Acta\Http\Tests\Unit\Routing;
 
 use Acta\Http\Exception\HttpException;
 use Acta\Http\OpenApi\Contract;
-use Acta\Http\Pipeline;
 use Acta\Http\Routing\RouteMatch;
 use Acta\Http\Routing\Router;
 use Acta\Http\Routing\RoutingMiddleware;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Tests\HttpTestCase;
 use LogicException;
 use Override;

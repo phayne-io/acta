@@ -6,10 +6,10 @@ namespace Acta\Http\Tests\Unit\Problem;
 
 use Acta\Http\Exception\ContractViolation;
 use Acta\Http\Exception\HttpException;
-use Acta\Http\Pipeline;
 use Acta\Http\Problem\ExceptionMapper;
 use Acta\Http\Problem\ProblemDetails;
 use Acta\Http\Problem\ProblemDetailsMiddleware;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Tests\Fixture\RecordingLogger;
 use Acta\Http\Tests\HttpTestCase;
 use Acta\Http\Trace\CorrelationMiddleware;

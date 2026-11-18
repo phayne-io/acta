@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Acta\Http\Tests\Unit\Trace;
 
-use Acta\Http\Pipeline;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Tests\HttpTestCase;
 use Acta\Http\Trace\CorrelationMiddleware;
 use Acta\Http\Trace\TraceContext;

@@ -7,7 +7,7 @@ namespace Acta\Http\Tests\Unit\Idempotency;
 use Acta\Http\Exception\HttpException;
 use Acta\Http\Idempotency\IdempotencyMiddleware;
 use Acta\Http\Idempotency\InMemoryIdempotencyStore;
-use Acta\Http\Pipeline;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Tests\Fixture\FrozenClock;
 use Acta\Http\Tests\HttpTestCase;
 use Closure;

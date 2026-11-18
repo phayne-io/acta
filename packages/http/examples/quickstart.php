@@ -42,7 +42,6 @@ use Acta\Http\Handler\OperationDispatcher;
 use Acta\Http\Handler\OperationHandlers;
 use Acta\Http\OpenApi\ContractLoader;
 use Acta\Http\OpenApi\SecurityScheme;
-use Acta\Http\Pipeline;
 use Acta\Http\Problem\ExceptionMapper;
 use Acta\Http\Problem\ProblemDetailsMiddleware;
 use Acta\Http\Response\Responder;
@@ -50,6 +49,7 @@ use Acta\Http\Routing\Router;
 use Acta\Http\Routing\RoutingMiddleware;
 use Acta\Http\Security\Authenticator;
 use Acta\Http\Security\SecurityMiddleware;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Trace\CorrelationMiddleware;
 use Acta\Http\Validation\Input;
 use Acta\Http\Validation\RequestValidationMiddleware;
@@ -312,6 +312,8 @@ $handlers = new OperationHandlers()->register(
     new DepositMoneyHandler($commands, $messages, $metadata, $view),
 );
 
+// An application pipes these in its PSR-15 stack (Mezzio, Slim, …). This runner is the
+// one of the tests: enough for a file that must run on its own.
 $api = new Pipeline(
     new OperationDispatcher($handlers),
     new CorrelationMiddleware(),                                         // a trace for every request

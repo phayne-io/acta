@@ -24,8 +24,14 @@ All notable changes to this package are documented here. The format follows
   in-memory and PostgreSQL stores.
 - Handlers attached to operations with `#[Operation]`, `OperationHandlers` with lazy
   PSR-11 resolution, `OperationDispatcher`, and a `Responder` built on PSR-17.
-- `Pipeline`, a minimal PSR-15 middleware runner.
 - Optional bridge to `acta/event-sourcing`: `MessageFactory`, `MetadataFactory`,
   `IfMatch` and `EventSourcingExceptionMapper`.
-- Testing support: `ContractAssertions` and the `IdempotencyStoreContract` suite.
+- Testing support: `ContractAssertions`, the `IdempotencyStoreContract` suite, and
+  `Testing\Pipeline`, a minimal PSR-15 runner for tests and examples.
+- `RouteMatch::attach()`, for an application that routes with a router of its own.
+
+### Changed
+
+- `Acta\Http\Pipeline` is now `Acta\Http\Testing\Pipeline`: running the middlewares
+  of an application is the job of its PSR-15 stack, not of this library.
 - Runnable banking example built on `acta/event-sourcing` and `moneyphp/money`.
