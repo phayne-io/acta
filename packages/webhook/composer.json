@@ -1,0 +1,99 @@
+{
+    "name": "acta/webhook",
+    "description": "Webhook adapters for event-sourced PHP 8.5+ applications: signed incoming webhooks translated to commands, and reliable outgoing webhooks with an outbox, retries and dead letters.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "webhooks",
+        "standard-webhooks",
+        "hmac",
+        "outbox",
+        "event-sourcing",
+        "hexagonal-architecture",
+        "psr-15",
+        "psr-18"
+    ],
+    "require": {
+        "php": "^8.5",
+        "acta/event-sourcing": "^1.0@dev",
+        "psr/clock": "^1.0",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.1",
+        "psr/http-message": "^2.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "acta/http": "^1.0@dev",
+        "friendsofphp/php-cs-fixer": "^3.89",
+        "laminas/laminas-diactoros": "^3.8",
+        "moneyphp/money": "^4.9",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.4 || ^13.0",
+        "symfony/yaml": "^7.4 || ^8.0"
+    },
+    "suggest": {
+        "acta/console": "Brings the webhook:deliver, webhook:dead-letters and webhook:retry commands, and es:migrate to create the tables.",
+        "acta/http": "Enables the validation of outgoing webhooks against the OpenAPI contract.",
+        "ext-pdo_pgsql": "Required by the PostgreSQL delivery log and delivery queue.",
+        "phpunit/phpunit": "Required to reuse the contract test suites shipped in Acta\\Webhook\\Testing."
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../event-sourcing",
+            "options": {
+                "versions": {
+                    "acta/event-sourcing": "1.0.x-dev"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../http",
+            "options": {
+                "versions": {
+                    "acta/http": "1.0.x-dev"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Acta\\Webhook\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Acta\\Webhook\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "check": [
+            "@cs",
+            "@stan",
+            "@test"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "stan": [
+            "phpstan analyse --memory-limit=1G",
+            "phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist"
+        ],
+        "test": "phpunit",
+        "test:unit": "phpunit --exclude-group postgres",
+        "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text"
+    },
+    "scripts-descriptions": {
+        "check": "Runs the coding standard, static analysis and the whole test suite.",
+        "test:unit": "Runs the tests that do not need a PostgreSQL server.",
+        "stan": "Analyses the library at the max level, then the tests.",
+        "cs:fix": "Applies the PER coding style."
+    },
+    "minimum-stability": "stable"
+}

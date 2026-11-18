@@ -73,7 +73,7 @@ setup: Keycloak runs in development mode (`start-dev`).
 
 ## Inside the Acta monorepo
 
-There, the four libraries are installed as symbolic links to `../`, which a container
+There, the five libraries are installed as symbolic links to `../`, which a container
 that only sees this directory cannot follow. `compose.monorepo.yaml` mounts them where
 the links point; the Makefile adds it by itself as long as the file exists. A project
 made with `composer create-project` does not have it.

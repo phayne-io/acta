@@ -37,7 +37,7 @@ version under a new name next to the old one and switch readers when it has caug
 
 Housekeeping, from a scheduler: idempotency keys, received webhook identifiers and
 delivered webhooks expire; each PostgreSQL adapter has a `purge` method. See the
-documentation of `acta/http` and `acta/console-webhook`.
+documentation of `acta/http` and `acta/webhook`.
 
 ## Webhooks
 

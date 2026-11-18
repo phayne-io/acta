@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         failOnDeprecation="true"
+         failOnNotice="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerNotices="true">
+    <testsuites>
+        <testsuite name="unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="postgres">
+            <directory>tests/Postgres</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <!-- The PostgreSQL tests are skipped when this server cannot be reached. `docker compose up -d` provides it. -->
+        <env name="ACTA_TEST_POSTGRES_DSN" value="pgsql:host=127.0.0.1;port=5432;dbname=acta_test"/>
+        <env name="ACTA_TEST_POSTGRES_USER" value="acta"/>
+        <env name="ACTA_TEST_POSTGRES_PASSWORD" value="acta"/>
+    </php>
+</phpunit>

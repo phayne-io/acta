@@ -1,4 +1,4 @@
-# Only for working on the skeleton inside the Acta monorepo, where the four libraries are
+# Only for working on the skeleton inside the Acta monorepo, where the five libraries are
 # installed from ../ as symbolic links (vendor/acta/http -> ../../../http): each library
 # is mounted where its link points to from /app.
 #
@@ -10,7 +10,8 @@ x-monorepo: &monorepo
     - ../event-sourcing:/event-sourcing
     - ../http:/http
     - ../oidc:/oidc
-    - ../console-webhook:/console-webhook
+    - ../console:/console
+    - ../webhook:/webhook
 
 services:
   api: *monorepo
