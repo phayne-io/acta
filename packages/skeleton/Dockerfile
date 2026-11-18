@@ -4,6 +4,8 @@
 # code and the same extensions, started with a different command.
 #
 #     docker build --target prod -t app .
+#
+# docs/operations.md says how to run it.
 
 ARG PHP_VERSION=8.5
 
@@ -27,13 +29,35 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 
 
+# --- The Acta libraries, when they are not on Packagist ---------------------------------
+# Empty, except inside the Acta monorepo, where the libraries are next to this directory
+# and outside what Docker may read. There, give them as a second build context:
+#
+#     docker build --target prod --build-context libraries=.. -t app .
+FROM scratch AS libraries
+
+
 # --- Dependencies of the production image ----------------------------------------------
 FROM base AS vendor
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-COPY composer.json composer.lock ./
+# Without a lock file, as in the monorepo where it is not committed, versions are resolved.
+COPY composer.json composer.lock* ./
 
-RUN composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist --classmap-authoritative
+# Path repositories of composer.json point to ../<library>, / from here: each library of
+# the context above is put there, and copied to vendor/ rather than linked, since the
+# next stage only takes vendor/.
+RUN --mount=type=bind,from=libraries,target=/libraries \
+    for library in /libraries/*/composer.json; do \
+        [ -e "$library" ] && ln -s "$(dirname "$library")" "/$(basename "$(dirname "$library")")"; \
+    done; \
+    COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist --no-autoloader
+
+# The class map is the only way classes are found in production: it is built once the
+# sources are there, or the application would not find its own. Installing above and
+# mapping here keeps the installed packages cached when only the sources change.
+COPY src src
+RUN composer dump-autoload --no-dev --no-interaction --no-scripts --classmap-authoritative
 
 
 # --- Production ------------------------------------------------------------------------

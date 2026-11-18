@@ -14,6 +14,12 @@ All notable changes to this package are documented here. The format follows
 - With `acta/http`: `openapi:lint`. With `acta/oidc`: `auth:login` and `auth:logout`.
 - `ProjectionRegistry`, `Schema`, `StatementsSchema` and `ConsoleMetadata`.
 
+### Fixed
+
+- `projection:run` and `webhook:deliver --watch` also stop cleanly on SIGQUIT. A
+  container built on the PHP-FPM image is stopped with that signal, which the workers
+  ignored: they were killed after the grace period, in the middle of their batch.
+
 ### Changed
 
 - The package is `acta/console`, split from `acta/console-webhook`. Its classes keep

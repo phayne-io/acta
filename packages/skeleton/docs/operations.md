@@ -14,8 +14,9 @@ The application is one image run several ways:
 `bin/console projection:status` lists the projections; there is always at least
 `webhooks`, the outbox of outgoing webhooks, next to one per read model.
 
-Workers stop cleanly on `SIGTERM`: they finish their batch, save their position and
-exit. Let your orchestrator restart them.
+Workers stop cleanly on `SIGTERM` and on `SIGQUIT`, the stop signal the image inherits
+from PHP-FPM: they finish their batch, save their position and exit with status 0.
+Let your orchestrator restart them.
 
 ## Database
 
@@ -61,8 +62,20 @@ docker build --target prod -t my-app .
 ```
 
 The image contains the code and its production dependencies, runs as `www-data` and
-writes only to `data/cache`. Configure it with the environment variables of
-[Configuration](configuration.md). In production:
+writes only to `data/cache`. It is one image for every process: PHP-FPM by default, a
+worker or a migration when given another command.
+
+| Process | Command |
+| --- | --- |
+| The API | `php-fpm` (the default), behind a web server that speaks FastCGI to port 9000 |
+| Migration, before the rest | `bin/console es:migrate` |
+| One worker per projection | `bin/console projection:run <name>` |
+| The webhook sender | `bin/console webhook:deliver --watch` |
+
+Every one of them stops cleanly when its container is stopped: see [Processes](#processes).
+
+Configure it with the environment variables of [Configuration](configuration.md). In
+production:
 
 - leave `APP_DEBUG` off and `PROJECTIONS_AFTER_COMMAND` empty;
 - keep `HTTP_RESPONSE_VALIDATION=log`, and alert on the log line it writes;
@@ -70,6 +83,23 @@ writes only to `data/cache`. Configure it with the environment variables of
 - point `CACHE_DSN` at a Valkey or Redis server to share the keys of the identity
   provider between instances, or leave it empty and accept one fetch per instance;
 - run `es:migrate` before starting the new version.
+
+An identity provider or a webhook subscriber whose certificate comes from a private
+authority is refused, as it should be. To trust that authority, mount a bundle holding
+it next to the public ones, and a PHP setting that names it:
+
+```ini
+; /usr/local/etc/php/conf.d/zz-ca.ini
+curl.cainfo = /etc/ssl/local/ca-bundle.pem
+openssl.cafile = /etc/ssl/local/ca-bundle.pem
+```
+
+The generators (`make:*`) are listed by the console of the image but have nothing to
+generate from there: their templates stay in the repository.
+
+Inside the Acta monorepo the libraries are next to the skeleton, where a build cannot
+read them. Give them as a second context: `docker build --target prod --build-context
+libraries=.. -t my-app .`
 
 `GET /health` answers as soon as the process does and checks nothing else, on purpose:
 use it as the liveness probe.

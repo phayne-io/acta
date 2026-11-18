@@ -55,7 +55,7 @@ $application->run();
 
 ```bash
 bin/console es:migrate                  # at every deployment: the statements are idempotent
-bin/console projection:run accounts     # a worker; stops cleanly on SIGTERM
+bin/console projection:run accounts     # a worker; stops cleanly when signalled
 bin/console projection:status
 ```
 
