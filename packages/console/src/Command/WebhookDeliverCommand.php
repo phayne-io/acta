@@ -43,7 +43,8 @@ final class WebhookDeliverCommand extends Command implements SignalableCommandIn
     #[Override]
     public function getSubscribedSignals(): array
     {
-        return defined('SIGINT') && defined('SIGTERM') ? [SIGINT, SIGTERM] : [];
+        // SIGQUIT is what a container built on the PHP-FPM image is stopped with.
+        return defined('SIGINT') && defined('SIGTERM') && defined('SIGQUIT') ? [SIGINT, SIGTERM, SIGQUIT] : [];
     }
 
     #[Override]

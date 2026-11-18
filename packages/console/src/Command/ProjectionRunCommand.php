@@ -21,9 +21,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Runs a projection: catches up with the event log, then keeps following it.
  *
- * Meant to run under a process supervisor, one process per projection. On SIGINT or
- * SIGTERM the projection finishes its current batch and stops; the `projection:stop`
- * command asks the same from another terminal.
+ * Meant to run under a process supervisor, one process per projection. On SIGINT,
+ * SIGTERM or SIGQUIT the projection finishes its current batch and stops; the
+ * `projection:stop` command asks the same from another terminal.
  */
 #[AsCommand('projection:run', 'Runs a projection until it is stopped')]
 final class ProjectionRunCommand extends Command implements SignalableCommandInterface
@@ -42,8 +42,9 @@ final class ProjectionRunCommand extends Command implements SignalableCommandInt
     #[Override]
     public function getSubscribedSignals(): array
     {
-        // The constants only exist with the pcntl extension.
-        return defined('SIGINT') && defined('SIGTERM') ? [SIGINT, SIGTERM] : [];
+        // The constants only exist with the pcntl extension. SIGQUIT is what a container
+        // built on the PHP-FPM image is stopped with: that image declares it.
+        return defined('SIGINT') && defined('SIGTERM') && defined('SIGQUIT') ? [SIGINT, SIGTERM, SIGQUIT] : [];
     }
 
     #[Override]

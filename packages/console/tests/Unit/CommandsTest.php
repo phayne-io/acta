@@ -123,7 +123,9 @@ final class CommandsTest extends TestCase
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
         self::assertStringContainsString('stopped at position 0:1', $tester->getDisplay());
         self::assertFalse($command->handleSignal(2));
-        self::assertContains($command->getSubscribedSignals(), [[], [2, 15]]);
+        // Nothing without the pcntl extension; with it, SIGINT, SIGTERM and SIGQUIT, which
+        // is the signal a container built on the PHP-FPM image is stopped with.
+        self::assertContains($command->getSubscribedSignals(), [[], [2, 15, 3]]);
     }
 
     public function testAnUnknownProjectionIsAnError(): void
@@ -245,6 +247,7 @@ final class CommandsTest extends TestCase
         self::assertSame("2 delivered, 0 to retry, 0 given up\n1 delivered, 0 to retry, 0 given up\n", $tester->getDisplay(true));
         self::assertSame([7, 7], $waits);
         self::assertCount(3, $http->received);
+        self::assertContains($command->getSubscribedSignals(), [[], [2, 15, 3]]);
     }
 
     public function testDeadLettersAreListedAndSentAgain(): void

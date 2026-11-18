@@ -64,8 +64,10 @@ $registry = new ProjectionRegistry()
 | `projection:status` | Lists projections, their status and position; registered ones that never ran included. |
 | `projection:stop <name>` | Asks a projection running in another process to stop after its batch. |
 
-`projection:run` stops cleanly on SIGINT and SIGTERM, with `ext-pcntl`: the current batch
-finishes and its checkpoint is written. Starting a projection that already runs
+`projection:run` and `webhook:deliver --watch` stop cleanly on SIGINT, SIGTERM and
+SIGQUIT, with `ext-pcntl`: the current batch finishes and its checkpoint is written.
+SIGQUIT is there for containers built on the PHP-FPM image, which declares it as its
+stop signal. Starting a projection that already runs
 elsewhere fails with an explicit message.
 
 ## Webhooks
