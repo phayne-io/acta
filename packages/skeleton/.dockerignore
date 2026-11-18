@@ -14,3 +14,7 @@ config/autoload/local.php
 config/autoload/*.local.php
 .infection
 infection.json5
+docker/certs
+compose.yaml
+compose.monorepo.yaml
+Makefile

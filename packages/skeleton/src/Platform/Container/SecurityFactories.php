@@ -27,6 +27,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Cache\Psr16Cache;
 
 /**
@@ -48,11 +49,22 @@ final class SecurityFactories
     }
 
     /**
-     * Where the metadata and the keys of the identity provider are kept between requests.
+     * Where the metadata and the keys of the identity provider are kept between requests:
+     * on the Valkey or Redis server of `acta.cache_dsn`, which every instance of the
+     * application then shares, or in files of this machine when none is configured.
+     *
+     * The server is only contacted when the cache is first read or written.
      */
     public static function cache(ContainerInterface $container): CacheInterface
     {
-        return new Psr16Cache(new FilesystemAdapter('acta', 0, Settings::of($container)->path('acta.cache_dir', 'data/cache')));
+        $settings = Settings::of($container);
+        $dsn = $settings->string('acta.cache_dsn');
+
+        return new Psr16Cache(
+            $dsn !== ''
+                ? new RedisAdapter(RedisAdapter::createConnection($dsn, ['lazy' => true]), 'acta')
+                : new FilesystemAdapter('acta', 0, $settings->path('acta.cache_dir', 'data/cache')),
+        );
     }
 
     public static function transport(ContainerInterface $container): Transport

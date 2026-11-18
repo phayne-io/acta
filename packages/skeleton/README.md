@@ -21,17 +21,14 @@ which brings them all.
 
 ## Start
 
-The local stack is in [`docker/`](../../docker), at the root of the repository: the API
-on <https://api.mybank.io> with a mkcert certificate, its workers, PostgreSQL and
-Keycloak as the identity provider.
+You need Docker and [mkcert](https://github.com/FiloSottile/mkcert).
 
 ```sh
-cd ../../docker
-make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts
-make up
+make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts (asks for sudo)
+make up        # the API over HTTPS, its workers, PostgreSQL, Valkey and Keycloak
 ```
 
-The contract of the API is served at `/openapi.json`.
+The API answers on <https://api.mybank.io>; its contract is served at `/openapi.json`.
 
 ```sh
 TOKEN=$(make -s token)
@@ -48,6 +45,16 @@ curl -X POST https://api.mybank.io/accounts/0197…/deposits \
 curl -H "Authorization: Bearer $TOKEN" https://api.mybank.io/accounts/0197…
 # {"id":"0197…","owner":"Ada","balance":{"amount":"12000","currency":"EUR"},"version":2}
 ```
+
+### A project of your own
+
+```sh
+composer create-project acta/skeleton my-shop
+```
+
+asks what the application is called and under which domain its local stack answers,
+and puts the answers wherever a name is needed: `.env`, the contract, `composer.json`,
+this documentation. Change them later in `.env`.
 
 Without Docker, see [Getting started](docs/getting-started.md).
 
@@ -108,6 +115,7 @@ composer mutation       # mutation testing of the domain and the application (ne
 ## Documentation
 
 - [Getting started](docs/getting-started.md) — with and without Docker, the first requests
+- [The local stack](docs/local-stack.md) — HTTPS with mkcert, Keycloak, Valkey: how it fits together
 - [Architecture](docs/architecture.md) — the layers, the path of a request, consistency
 - [Adding a context](docs/adding-a-context.md) — the generators, step by step
 - [Configuration](docs/configuration.md) — environment variables, what a context declares, swapping an adapter

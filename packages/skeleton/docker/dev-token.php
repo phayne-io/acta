@@ -3,18 +3,19 @@
 declare(strict_types=1);
 
 /*
- * Prints an access token issued by Keycloak to the "mybank-dev" client, with the client
- * credentials grant:
+ * Prints an access token issued by the Keycloak of the local stack to its development
+ * client, "<project>-dev", with the client credentials grant:
  *
  *     make token
- *     curl -H "Authorization: Bearer $(make -s token)" https://api.mybank.io/accounts
+ *     curl -H "Authorization: Bearer $(make -s token)" https://api.<domain>/accounts
  *
  * Give scopes as arguments to ask for less than the client is allowed:
  *
- *     php token.php banking:read
+ *     make token ARGS=banking:read
  */
 
-$issuer = getenv('OIDC_ISSUER') ?: 'https://auth.mybank.io/realms/mybank';
+$issuer = getenv('OIDC_ISSUER') ?: '';
+$client = (getenv('COMPOSE_PROJECT_NAME') ?: '') . '-dev';
 $scopes = array_slice($argv, 1);
 
 $response = @file_get_contents($issuer . '/protocol/openid-connect/token', false, stream_context_create(['http' => [
@@ -22,8 +23,8 @@ $response = @file_get_contents($issuer . '/protocol/openid-connect/token', false
     'header' => 'Content-Type: application/x-www-form-urlencoded',
     'content' => http_build_query([
         'grant_type' => 'client_credentials',
-        'client_id' => 'mybank-dev',
-        'client_secret' => 'mybank-dev-secret',
+        'client_id' => $client,
+        'client_secret' => $client . '-secret',
         ...($scopes === [] ? [] : ['scope' => implode(' ', $scopes)]),
     ]),
     'timeout' => 5,

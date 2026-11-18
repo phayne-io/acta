@@ -66,9 +66,9 @@ writes only to `data/cache`. Configure it with the environment variables of
 
 - leave `APP_DEBUG` off and `PROJECTIONS_AFTER_COMMAND` empty;
 - keep `HTTP_RESPONSE_VALIDATION=log`, and alert on the log line it writes;
-- serve the API over TLS and pass the `Authorization` header to PHP (see `docker/nginx` at the root of the repository);
-- share the cache of identity-provider keys between instances, or accept one fetch per
-  instance;
+- serve the API over TLS and pass the `Authorization` header to PHP (see `docker/nginx`);
+- point `CACHE_DSN` at a Valkey or Redis server to share the keys of the identity
+  provider between instances, or leave it empty and accept one fetch per instance;
 - run `es:migrate` before starting the new version.
 
 `GET /health` answers as soon as the process does and checks nothing else, on purpose:

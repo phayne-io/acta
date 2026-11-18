@@ -12,8 +12,9 @@ FROM php:${PHP_VERSION}-fpm-alpine AS base
 COPY --from=ghcr.io/mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
 
 # pdo_pgsql: the event store and the read models. bcmath: exact amounts (moneyphp/money).
-# pcntl: lets the workers finish their batch when they are asked to stop.
-RUN install-php-extensions pdo_pgsql bcmath pcntl
+# pcntl: lets the workers finish their batch when they are asked to stop. redis: the
+# shared cache (CACHE_DSN), on Valkey or Redis.
+RUN install-php-extensions pdo_pgsql bcmath pcntl redis
 
 WORKDIR /app
 

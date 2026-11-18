@@ -2,14 +2,11 @@
 
 ## With Docker
 
-The stack is in the `docker` directory at the root of the repository; its
-[README](../../../docker/README.md) says how it is put together. You need Docker and
-[mkcert](https://github.com/FiloSottile/mkcert).
+You need Docker and [mkcert](https://github.com/FiloSottile/mkcert).
 
 ```sh
-cd ../../docker
-make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts
-make up
+make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts (asks for sudo)
+make up        # makes the certificate on the first run, builds, starts, waits
 ```
 
 starts, from one image run several ways:
@@ -22,12 +19,15 @@ starts, from one image run several ways:
 | `projector-accounts`, `projector-webhooks` | keep the read model and the webhook outbox up to date |
 | `webhook-sender` | sends the queued webhooks to their subscribers |
 | `database` | PostgreSQL, on port 54320 |
+| `cache` | Valkey, on port 63790: the keys of the identity provider, shared by all of the above |
 | `keycloak` | the identity provider, with the realm `mybank` |
 
 `make` lists the other commands: `make logs`, `make console ARGS="projection:status"`,
 `make test`, `make check`, `make down`.
 
-The settings are in `compose.yaml` there; `.env.dist` lists the same variables.
+The settings are in `.env`, created from `.env.dist` on the first `make up`. Its first
+three lines name the project; [The local stack](local-stack.md) says what follows from
+them and how the pieces fit together.
 
 ### A token
 
@@ -41,7 +41,7 @@ make login                      # a person, from the console: user ada, password
 ```
 
 Tokens carry the audience `mybank-api` and the scopes `banking:read banking:write`;
-clients, scopes and users are in `docker/keycloak/mybank-realm.json`.
+clients, scopes and users are in `docker/keycloak/realm.json`.
 
 To use another provider (Auth0, Microsoft Entra ID, …), point `OIDC_ISSUER` at it and
 set `OIDC_AUDIENCE` to the identifier it gives this API.
@@ -68,7 +68,7 @@ up to date right after each command, so that no projection worker is needed.
 ## The first requests
 
 ```sh
-TOKEN=$(make -s token)        # in the docker directory
+TOKEN=$(make -s token)
 API=https://api.mybank.io
 
 # Open an account. The Idempotency-Key makes the request safe to retry.

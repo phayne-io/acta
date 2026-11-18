@@ -1,0 +1,20 @@
+# Only for working on the skeleton inside the Acta monorepo, where the four libraries are
+# installed from ../ as symbolic links (vendor/acta/http -> ../../../http): each library
+# is mounted where its link points to from /app.
+#
+# The Makefile adds this file by itself as long as it exists. A project created from the
+# skeleton does not have it: `composer create-project` removes it.
+
+x-monorepo: &monorepo
+  volumes:
+    - ../event-sourcing:/event-sourcing
+    - ../http:/http
+    - ../oidc:/oidc
+    - ../console-webhook:/console-webhook
+
+services:
+  api: *monorepo
+  migrate: *monorepo
+  projector-accounts: *monorepo
+  projector-webhooks: *monorepo
+  webhook-sender: *monorepo

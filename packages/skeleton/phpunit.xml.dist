@@ -35,7 +35,7 @@
         </include>
     </source>
     <php>
-        <!-- Tests of the "postgres" group are skipped when this server cannot be reached. The stack of docker/, at the root of the repository, provides one on port 54320. -->
+        <!-- Tests of the "postgres" group are skipped when this server cannot be reached. `make test` runs them in Docker; the stack publishes its server on port 54320. -->
         <env name="TEST_DATABASE_DSN" value="pgsql:host=127.0.0.1;port=5432;dbname=app_test"/>
         <env name="TEST_DATABASE_USER" value="app"/>
         <env name="TEST_DATABASE_PASSWORD" value="app"/>

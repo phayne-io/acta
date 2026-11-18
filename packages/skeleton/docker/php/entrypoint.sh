@@ -1,6 +1,6 @@
 #!/bin/sh
 # Adds the mkcert authority, mounted in /usr/local/share/ca-certificates, to the
-# certificates the container trusts: PHP then reaches https://auth.mybank.io like any
+# certificates the container trusts: PHP then reaches the identity provider of the local stack like any
 # other HTTPS address, with verification on.
 set -e
 

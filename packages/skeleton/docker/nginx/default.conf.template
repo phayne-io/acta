@@ -1,7 +1,9 @@
-# TLS for the two names of MyBank, with the certificate `make certs` writes.
+# TLS for the two names of the application, with the certificate `make certs` writes.
+# The nginx image replaces ${APP_DOMAIN} when it starts, and nothing else: it only knows
+# the variables of its environment, so the variables of nginx itself are left alone.
 
-ssl_certificate /etc/nginx/certs/mybank.pem;
-ssl_certificate_key /etc/nginx/certs/mybank-key.pem;
+ssl_certificate /etc/nginx/certs/local.pem;
+ssl_certificate_key /etc/nginx/certs/local-key.pem;
 ssl_protocols TLSv1.2 TLSv1.3;
 
 # Docker's resolver: lets nginx start, and keep running, while Keycloak is away.
@@ -18,8 +20,8 @@ server {
 server {
     listen 443 ssl default_server;
     http2 on;
-    server_name api.mybank.io;
-    root /acta/packages/skeleton/public;
+    server_name api.${APP_DOMAIN};
+    root /app/public;
 
     # Incoming webhooks are refused beyond 1 MB by the application itself.
     client_max_body_size 2m;
@@ -32,8 +34,8 @@ server {
         set $php api:9000;
         fastcgi_pass $php;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME /acta/packages/skeleton/public/index.php;
-        fastcgi_param DOCUMENT_ROOT /acta/packages/skeleton/public;
+        fastcgi_param SCRIPT_FILENAME /app/public/index.php;
+        fastcgi_param DOCUMENT_ROOT /app/public;
         fastcgi_param HTTPS on;
         # PHP does not see the Authorization header unless it is passed explicitly.
         fastcgi_param HTTP_AUTHORIZATION $http_authorization;
@@ -49,7 +51,7 @@ server {
 server {
     listen 443 ssl;
     http2 on;
-    server_name auth.mybank.io;
+    server_name auth.${APP_DOMAIN};
 
     # Keycloak answers with large headers (cookies, redirects carrying tokens).
     proxy_buffer_size 128k;
