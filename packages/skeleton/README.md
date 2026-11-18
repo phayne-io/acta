@@ -52,9 +52,16 @@ curl -H "Authorization: Bearer $TOKEN" https://api.mybank.io/accounts/0197…
 composer create-project acta/skeleton my-shop
 ```
 
-asks what the application is called and under which domain its local stack answers,
-and puts the answers wherever a name is needed: `.env`, the contract, `composer.json`,
-this documentation. Change them later in `.env`.
+asks three questions and makes the project yours:
+
+| Question | Default | Where the answer goes |
+| --- | --- | --- |
+| Name of the application | the directory | `.env`, the contract, `composer.json`, this documentation |
+| Domain of the local stack | `<name>.test` | `.env`: the API answers on `api.` and Keycloak on `auth.` under it |
+| Namespace of its classes | `App` | The sources, the tests, the configuration, the generators and the architecture rules |
+
+With `--no-interaction`, give them as `APP_NAME`, `APP_DOMAIN` and `APP_NAMESPACE` in the
+environment. The name and the domain can be changed later in `.env`.
 
 Without Docker, see [Getting started](docs/getting-started.md).
 

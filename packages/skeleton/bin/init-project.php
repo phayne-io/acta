@@ -8,17 +8,21 @@ declare(strict_types=1);
  *     composer create-project acta/skeleton my-shop
  *
  * Composer runs this once, after the dependencies are installed. It asks what the
- * application is called and under which domain the local stack answers, then:
+ * application is called, under which domain the local stack answers and which namespace
+ * its classes live in, then:
  *
  * - writes the three names to .env.dist and .env (COMPOSE_PROJECT_NAME, APP_NAME,
  *   APP_DOMAIN), from which the Docker stack derives everything else;
  * - puts them in the OpenAPI contract, composer.json, the README and the docs;
+ * - moves the classes from `App` to the namespace, wherever it is written: sources,
+ *   tests, configuration, the templates of the generators, the architecture rules;
  * - removes what only makes sense inside the Acta monorepo: the path repositories of
  *   composer.json and compose.monorepo.yaml;
  * - removes itself and its test.
  *
  * Without a terminal, or with --no-interaction, nothing is asked: the name is the one of
- * the directory, unless APP_NAME and APP_DOMAIN are set in the environment.
+ * the directory and the namespace stays `App`, unless APP_NAME, APP_DOMAIN and
+ * APP_NAMESPACE are set in the environment.
  *
  * It refuses to run inside the monorepo, where it would take the skeleton itself apart.
  */
@@ -27,6 +31,11 @@ declare(strict_types=1);
 const TEMPLATE_NAME = 'MyBank';
 const TEMPLATE_SLUG = 'mybank';
 const TEMPLATE_DOMAIN = 'mybank.io';
+const TEMPLATE_NAMESPACE = 'App';
+
+/** Where the namespace is written, besides the files at the root named below. */
+const NAMESPACED_DIRECTORIES = ['src', 'tests', 'templates', 'config', 'bin', 'public', 'docs'];
+const NAMESPACED_FILES = ['composer.json', 'deptrac.yaml', 'README.md'];
 
 exit(main(dirname(__DIR__)));
 
@@ -53,6 +62,18 @@ function main(string $root): int
 
     if (preg_match('/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/', $domain) !== 1) {
         fwrite(STDERR, sprintf("\"%s\" is not a domain name, such as %s.test.\n", $domain, $slug));
+
+        return 1;
+    }
+
+    $namespace = trim(str_replace('/', '\\', answer(
+        'Namespace of its classes',
+        environment('APP_NAMESPACE') ?? TEMPLATE_NAMESPACE,
+        $interactive && environment('APP_NAMESPACE') === null,
+    )), '\\');
+
+    if (preg_match('/^[A-Z][A-Za-z0-9]*(\\\\[A-Z][A-Za-z0-9]*)*$/', $namespace) !== 1 || str_starts_with($namespace . '\\', 'Acta\\')) {
+        fwrite(STDERR, sprintf("\"%s\" cannot be the namespace: give capitalised names separated by \\, such as Acme\\Shop, outside Acta.\n", $namespace));
 
         return 1;
     }
@@ -89,6 +110,12 @@ function main(string $root): int
         ));
     }
 
+    if ($namespace !== TEMPLATE_NAMESPACE) {
+        foreach (namespaced($root) as $file) {
+            rewrite($file, static fn(string $code): string => renamespaced($code, $namespace));
+        }
+    }
+
     rewrite($root . '/composer.json', static function (string $json) use ($name, $slug): string {
         $manifest = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
 
@@ -119,6 +146,11 @@ function main(string $root): int
         if (is_file($file)) {
             unlink($file);
         }
+    }
+
+    // Imports are sorted by name: a namespace that is not `App` moves them.
+    if ($namespace !== TEMPLATE_NAMESPACE && is_file($root . '/vendor/bin/php-cs-fixer')) {
+        passthru(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/vendor/bin/php-cs-fixer') . ' fix --quiet --config=' . escapeshellarg($root . '/.php-cs-fixer.dist.php'));
     }
 
     fwrite(STDOUT, sprintf(
@@ -155,6 +187,54 @@ function answer(string $question, string $default, bool $ask): string
     $given = is_string($line) ? trim($line) : '';
 
     return $given !== '' ? $given : $default;
+}
+
+/**
+ * The files in which the namespace of the classes may be written, this script and its
+ * test excepted: they are about to be removed.
+ *
+ * @return list<string>
+ */
+function namespaced(string $root): array
+{
+    $files = array_map(static fn(string $file): string => $root . '/' . $file, NAMESPACED_FILES);
+
+    foreach (NAMESPACED_DIRECTORIES as $directory) {
+        if (!is_dir($root . '/' . $directory)) {
+            continue;
+        }
+
+        $entries = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory, FilesystemIterator::SKIP_DOTS));
+
+        foreach ($entries as $entry) {
+            if ($entry instanceof SplFileInfo && $entry->isFile()) {
+                $files[] = $entry->getPathname();
+            }
+        }
+    }
+
+    return array_values(array_filter(
+        $files,
+        static fn(string $file): bool => $file !== __FILE__ && !str_ends_with($file, '/tests/Platform/InitProjectTest.php'),
+    ));
+}
+
+/**
+ * Moves every mention of the `App` namespace to another one.
+ *
+ * The namespace is written with one backslash in code, two in the strings of PHP, JSON
+ * and YAML, four in a regular expression inside a string: the separators of the new
+ * namespace are written the way the one that follows `App` is.
+ */
+function renamespaced(string $code, string $namespace): string
+{
+    $segments = explode('\\', $namespace);
+
+    return (string) preg_replace_callback(
+        '/(?:(?<![\w$])|(?<=\\\\b))' . TEMPLATE_NAMESPACE . '(?:(?=(\\\\+)[A-Za-z{(<`"\'])|(?<=namespace ' . TEMPLATE_NAMESPACE . ')(?=;))/',
+        static fn(array $match): string => implode($match[1] ?? '\\', $segments),
+        $code,
+    );
 }
 
 /**

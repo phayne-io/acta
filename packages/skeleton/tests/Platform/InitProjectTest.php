@@ -28,6 +28,12 @@ final class InitProjectTest extends TestCase
         'docs/getting-started.md',
         '.php-cs-fixer.dist.php',
         'tests/Platform/InitProjectTest.php',
+        'deptrac.yaml',
+        'config/config.php',
+        'src/Platform/Env.php',
+        'src/Platform/Make/MakeQueryCommand.php',
+        'tests/Architecture/ContextIsolationTest.php',
+        'tests/Platform/MakeCommandsTest.php',
     ];
 
     private string $parent;
@@ -107,6 +113,50 @@ final class InitProjectTest extends TestCase
         self::assertFileDoesNotExist($this->project . '/bin/init-project.php');
         self::assertFileDoesNotExist($this->project . '/tests/Platform/InitProjectTest.php');
         self::assertStringNotContainsString('init-project', $this->read('.php-cs-fixer.dist.php'));
+    }
+
+    public function testTheClassesStayInTheAppNamespaceUnlessAnotherOneIsGiven(): void
+    {
+        $before = $this->read('src/Platform/Env.php');
+
+        self::assertSame(0, $this->initialize());
+        self::assertSame($before, $this->read('src/Platform/Env.php'));
+    }
+
+    public function testTheGivenNamespaceReplacesAppHoweverItIsWritten(): void
+    {
+        self::assertSame(0, $this->initialize(['APP_NAMESPACE' => 'Acme\\Shop']));
+
+        // In code, with one backslash.
+        self::assertStringContainsString("namespace Acme\\Shop\\Platform;\n", $this->read('src/Platform/Env.php'));
+        self::assertStringContainsString("    Acme\\Shop\\Platform\\ConfigProvider::class,\n", $this->read('config/config.php'));
+        // In what the generators write.
+        self::assertStringContainsString("'Acme\\Shop\\{{ Context }}\\Application\\Query\\{{ Aggregate }}Directory'", $this->read('src/Platform/Make/MakeQueryCommand.php'));
+        // In strings, with two.
+        self::assertStringContainsString('"Acme\\\\Shop\\\\Billing\\\\ConfigProvider::class,', $this->read('tests/Platform/MakeCommandsTest.php'));
+        self::assertStringContainsString("value: '^Acme\\\\Shop\\\\(?!Platform", $this->read('deptrac.yaml'));
+        // In a regular expression inside a string, with four.
+        self::assertStringContainsString("'~\\bAcme\\\\\\\\Shop\\\\\\\\('", $this->read('tests/Architecture/ContextIsolationTest.php'));
+
+        $manifest = json_decode($this->read('composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($manifest);
+        self::assertSame(
+            [['psr-4' => ['Acme\\Shop\\' => 'src/']], ['psr-4' => ['Acme\\Shop\\Tests\\' => 'tests/']]],
+            [$manifest['autoload'], $manifest['autoload-dev']],
+        );
+
+        foreach (['src/Platform/Env.php', 'src/Platform/Make/MakeQueryCommand.php', 'config/config.php', 'deptrac.yaml', 'composer.json'] as $file) {
+            self::assertDoesNotMatchRegularExpression('/\\bApp\\\\/', $this->read($file), $file);
+        }
+    }
+
+    public function testANamespaceThatIsNotOneIsRefused(): void
+    {
+        $before = $this->read('.env.dist');
+
+        self::assertSame(1, $this->initialize(['APP_NAMESPACE' => 'acme shop']));
+        self::assertSame(1, $this->initialize(['APP_NAMESPACE' => 'Acta\\Shop']));
+        self::assertSame($before, $this->read('.env.dist'));
     }
 
     public function testADomainThatIsNotOneIsRefusedAndNothingIsTouched(): void

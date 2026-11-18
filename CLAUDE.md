@@ -31,9 +31,12 @@ The skeleton is also a template for `composer create-project`, which changes two
 there. Its path repositories end with `*` (`../http*`): Composer accepts a wildcard that
 matches nothing, so that the project installs outside the monorepo, where a plain
 `../http` is an error. And `bin/init-project.php`, run by `post-create-project-cmd`,
-names the new project and removes what only serves the monorepo (those repositories,
-`compose.monorepo.yaml`, itself). Whatever carries the name `mybank`, `MyBank` or
-`mybank.io` in the skeleton's README and docs is replaced by it: keep those spellings.
+asks for a name, a domain and a namespace, and removes what only serves the monorepo
+(those repositories, `compose.monorepo.yaml`, itself). Whatever carries the name
+`mybank`, `MyBank` or `mybank.io` in the skeleton's README and docs is replaced by it:
+keep those spellings. Likewise every `App\` is moved to the chosen namespace, in code,
+strings, YAML and the generators' templates: write the namespace as `App\…`, never
+assembled from pieces, so that the script finds it.
 
 ## Commands
 
