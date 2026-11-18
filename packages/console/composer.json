@@ -1,0 +1,114 @@
+{
+    "name": "acta/console",
+    "description": "Operational console commands for event-sourced PHP 8.5+ applications: migrations, projections, and, with the libraries they belong to, webhook delivery, contract linting and login.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "console",
+        "cli",
+        "symfony-console",
+        "projections",
+        "migrations",
+        "event-sourcing",
+        "hexagonal-architecture"
+    ],
+    "require": {
+        "php": "^8.5",
+        "acta/event-sourcing": "^1.0@dev",
+        "psr/clock": "^1.0",
+        "symfony/console": "^7.0 || ^8.0"
+    },
+    "require-dev": {
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "acta/http": "^1.0@dev",
+        "acta/oidc": "^1.0@dev",
+        "acta/webhook": "^1.0@dev",
+        "friendsofphp/php-cs-fixer": "^3.89",
+        "laminas/laminas-diactoros": "^3.8",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.4 || ^13.0",
+        "symfony/yaml": "^7.4 || ^8.0"
+    },
+    "suggest": {
+        "acta/http": "Enables the openapi:lint command.",
+        "acta/oidc": "Enables the auth:login and auth:logout commands.",
+        "acta/webhook": "Enables the webhook:deliver, webhook:dead-letters and webhook:retry commands.",
+        "ext-pcntl": "Lets long-running commands stop cleanly on SIGINT and SIGTERM.",
+        "ext-pdo_pgsql": "Required by the es:migrate command on PostgreSQL."
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../event-sourcing",
+            "options": {
+                "versions": {
+                    "acta/event-sourcing": "1.0.x-dev"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../http",
+            "options": {
+                "versions": {
+                    "acta/http": "1.0.x-dev"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../oidc",
+            "options": {
+                "versions": {
+                    "acta/oidc": "1.0.x-dev"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../webhook",
+            "options": {
+                "versions": {
+                    "acta/webhook": "1.0.x-dev"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Acta\\Console\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Acta\\Console\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "check": [
+            "@cs",
+            "@stan",
+            "@test"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "stan": [
+            "phpstan analyse --memory-limit=1G",
+            "phpstan analyse --memory-limit=1G -c phpstan.tests.neon.dist"
+        ],
+        "test": "phpunit",
+        "test:unit": "phpunit --exclude-group postgres",
+        "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text"
+    },
+    "scripts-descriptions": {
+        "check": "Runs the coding standard, static analysis and the whole test suite.",
+        "test:unit": "Runs the tests that do not need a PostgreSQL server.",
+        "stan": "Analyses the library at the max level, then the tests.",
+        "cs:fix": "Applies the PER coding style."
+    },
+    "minimum-stability": "stable"
+}

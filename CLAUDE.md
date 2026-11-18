@@ -14,12 +14,15 @@ A monorepo. Each package under `packages/` is a standalone Composer package with
 | `packages/event-sourcing` | `Acta\EventSourcing` | Messages, buses, event store, aggregates, projections, snapshots; in-memory and PostgreSQL adapters |
 | `packages/http` | `Acta\Http` | HTTP primary adapter driven by an OpenAPI 3.1 contract: routing, security, validation, RFC 9457 errors (PSR-7/15/17) |
 | `packages/oidc` | `Acta\Oidc` | OAuth 2.0 / OIDC: Bearer JWT verification (discovery, JWKS), client flows, a fake provider for tests |
-| `packages/console-webhook` | `Acta\Console`, `Acta\Webhook` | Operational console commands; incoming and outgoing webhooks |
-| `packages/skeleton` | `App` | Project template wiring the four on Mezzio, with a `Banking` example context and `make:*` generators |
+| `packages/webhook` | `Acta\Webhook` | Incoming webhooks translated to commands; outgoing webhooks with outbox, retries and dead letters |
+| `packages/console` | `Acta\Console` | Operational console commands: migrations, projections, webhook delivery, contract linting, login |
+| `packages/skeleton` | `App` | Project template wiring the five on Mezzio, with a `Banking` example context and `make:*` generators |
 
 Dependencies between packages only go this way: `event-sourcing` depends on no other
-package; `http` and `oidc` do not know each other; `console-webhook` builds on
-`event-sourcing` and uses `http` and `oidc` only in optional bridges; `skeleton` uses all four.
+package; `http` and `oidc` do not know each other; `webhook` builds on `event-sourcing`
+and uses `http` only in an optional bridge; `console` builds on `event-sourcing` and
+uses `webhook`, `http` and `oidc` only in the commands made for each, as development
+dependencies; `webhook` does not know `console`; `skeleton` uses all five.
 
 Packages reach each other through Composer **path repositories** (`../event-sourcing`),
 installed as symlinks. Each path repository states the version it holds

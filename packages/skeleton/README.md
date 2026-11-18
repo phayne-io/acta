@@ -3,7 +3,7 @@
 A small bank as a hexagonal, event-sourced application in PHP 8.5 and later: a
 contract-first API, a console and webhooks in front of a domain that knows none of them.
 
-It wires the four Acta libraries together on Mezzio, and comes with generators that
+It wires the five Acta libraries together on Mezzio, and comes with generators that
 scaffold further contexts the same way as its `Banking` one.
 
 | | |
@@ -11,7 +11,8 @@ scaffold further contexts the same way as its `Banking` one.
 | **Domain** | Event-sourced aggregates, commands, queries, projections — [`acta/event-sourcing`](../event-sourcing) |
 | **API** | An OpenAPI 3.1 contract drives routing, security, validation and RFC 9457 errors, on PSR-7/15/17 — [`acta/http`](../http) |
 | **Security** | OAuth 2.0 / OpenID Connect: Bearer JWT verified against the JWKS of your identity provider — [`acta/oidc`](../oidc) |
-| **Console and webhooks** | Operational commands, signed incoming webhooks, outgoing webhooks with outbox and retries — [`acta/console-webhook`](../console-webhook) |
+| **Console** | Operational commands: migrations, projections, webhook delivery, contract linting, login — [`acta/console`](../console) |
+| **Webhooks** | Signed incoming webhooks translated to commands; outgoing webhooks with outbox, retries and dead letters — [`acta/webhook`](../webhook) |
 | **Persistence** | PostgreSQL in production, in memory in tests, behind the same ports |
 
 ## Requirements
