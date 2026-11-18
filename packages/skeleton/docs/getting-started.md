@@ -2,43 +2,49 @@
 
 ## With Docker
 
+You need Docker and [mkcert](https://github.com/FiloSottile/mkcert).
+
 ```sh
-make up
+make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts (asks for sudo)
+make up        # makes the certificate on the first run, builds, starts, waits
 ```
 
 starts, from one image run several ways:
 
 | Service | Role |
 | --- | --- |
-| `web`, `api` | nginx in front of PHP-FPM: the API on <http://localhost:8080> |
+| `web` | nginx, which terminates TLS: the API on <https://api.mybank.io>, Keycloak on <https://auth.mybank.io> |
+| `api` | PHP-FPM |
 | `migrate` | creates the tables, then exits |
 | `projector-accounts`, `projector-webhooks` | keep the read model and the webhook outbox up to date |
 | `webhook-sender` | sends the queued webhooks to their subscribers |
-| `database` | PostgreSQL, on port 5432 |
-| `idp` | a development identity provider, on port 8081 |
+| `database` | PostgreSQL, on port 54320 |
+| `cache` | Valkey, on port 63790: the keys of the identity provider, shared by all of the above |
+| `keycloak` | the identity provider, with the realm `mybank` |
 
 `make` lists the other commands: `make logs`, `make console ARGS="projection:status"`,
 `make test`, `make check`, `make down`.
 
-The settings are in `.env`, created from `.env.dist` on the first `make up`.
+The settings are in `.env`, created from `.env.dist` on the first `make up`. Its first
+three lines name the project; [The local stack](local-stack.md) says what follows from
+them and how the pieces fit together.
 
 ### A token
 
-The API accepts Bearer JWT issued by the identity provider of `OIDC_ISSUER`. In
-development, that is a stand-in that signs a token for whoever asks:
+The API accepts Bearer JWT issued by the identity provider of `OIDC_ISSUER`, here the
+realm `mybank` of Keycloak:
 
 ```sh
-make token
+make token                      # a machine: the client credentials of "mybank-dev"
+make token ARGS=banking:read    # the same, allowed to read only
+make login                      # a person, from the console: user ada, password ada
 ```
 
-Every token it issues carries the audience `acta-api` and the scopes `banking:read
-banking:write`; change them in `compose.yaml`. The token must be requested from inside
-the Compose network, which `make token` does: the stand-in signs with the address it
-was called at, and the API expects the address it knows.
+Tokens carry the audience `mybank-api` and the scopes `banking:read banking:write`;
+clients, scopes and users are in `docker/keycloak/realm.json`.
 
-For anything beyond trying the API, point `OIDC_ISSUER` at your real provider
-(Keycloak, Auth0, Microsoft Entra ID, …) and set `OIDC_AUDIENCE` to the identifier it
-gives this API.
+To use another provider (Auth0, Microsoft Entra ID, …), point `OIDC_ISSUER` at it and
+set `OIDC_AUDIENCE` to the identifier it gives this API.
 
 ## Without Docker
 
@@ -49,7 +55,7 @@ composer install
 cp config/autoload/local.php.dist config/autoload/local.php
 
 export DATABASE_DSN='pgsql:host=127.0.0.1;port=5432;dbname=app' DATABASE_USER=app DATABASE_PASSWORD=app
-export OIDC_ISSUER=https://your-idp.example OIDC_AUDIENCE=acta-api
+export OIDC_ISSUER=https://your-idp.example OIDC_AUDIENCE=mybank-api
 
 bin/console es:migrate
 composer serve          # http://localhost:8080
@@ -63,7 +69,7 @@ up to date right after each command, so that no projection worker is needed.
 
 ```sh
 TOKEN=$(make -s token)
-API=http://localhost:8080
+API=https://api.mybank.io
 
 # Open an account. The Idempotency-Key makes the request safe to retry.
 curl -i -X POST $API/accounts \

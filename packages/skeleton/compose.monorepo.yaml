@@ -1,15 +1,16 @@
-# Only for working on the skeleton inside the Acta monorepo, where the four libraries
-# are installed from ../ as symbolic links: the whole repository is mounted so that the
-# links resolve.
+# Only for working on the skeleton inside the Acta monorepo, where the four libraries are
+# installed from ../ as symbolic links (vendor/acta/http -> ../../../http): each library
+# is mounted where its link points to from /app.
 #
-#     docker compose -f compose.yaml -f compose.monorepo.yaml up
-#
-# A project created from the skeleton does not need this file: delete it.
+# The Makefile adds this file by itself as long as it exists. A project created from the
+# skeleton does not have it: `composer create-project` removes it.
 
 x-monorepo: &monorepo
-  working_dir: /acta/packages/skeleton
   volumes:
-    - ../..:/acta
+    - ../event-sourcing:/event-sourcing
+    - ../http:/http
+    - ../oidc:/oidc
+    - ../console-webhook:/console-webhook
 
 services:
   api: *monorepo
@@ -17,7 +18,3 @@ services:
   projector-accounts: *monorepo
   projector-webhooks: *monorepo
   webhook-sender: *monorepo
-  web:
-    volumes:
-      - ./docker/nginx/monorepo.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./public:/acta/packages/skeleton/public:ro

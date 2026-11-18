@@ -7,9 +7,11 @@ values.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
+| `APP_NAME` | `Application` | What the console calls the application |
 | `APP_DEBUG` | off | Adds exception details to problem documents; recompiles the contract when it changes |
 | `APP_PERSISTENCE` | `postgres` | `memory` keeps all state in the process, for tests |
 | `DATABASE_DSN`, `DATABASE_USER`, `DATABASE_PASSWORD` | local `app` database | The PostgreSQL connection |
+| `CACHE_DSN` | empty | A Valkey or Redis server (`redis://host:6379`, needs `ext-redis`) for the metadata and keys of the identity provider. Empty: files under `data/cache` |
 | `PROJECTIONS_AFTER_COMMAND` | empty | Comma-separated projections brought up to date after each command, where no worker runs. Empty in production |
 | `HTTP_BASE_PATH` | empty | Prefix of the API when it is served under a path, `/api` for instance |
 | `HTTP_RESPONSE_VALIDATION` | `log` | `fail` turns a response that breaks the contract into a 500; `log` reports it and lets it through |
@@ -19,6 +21,9 @@ values.
 | `OIDC_CLIENT_ID` | — | Public client `bin/console auth:login` logs in with (device flow) |
 | `WEBHOOK_<SOURCE>_SECRET` | — | Secret shared with a sender of incoming webhooks |
 | `LOG_STREAM`, `LOG_LEVEL` | `php://stderr`, `info` | Where the JSON log lines go, and from which PSR-3 level |
+
+`COMPOSE_PROJECT_NAME`, `APP_DOMAIN`, `DATABASE_PORT` and `CACHE_PORT` are read by the
+local Docker stack only: see [The local stack](local-stack.md).
 
 `config/autoload/local.php`, which is not committed, overrides any setting for one
 machine. Start from `local.php.dist`.

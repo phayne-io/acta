@@ -1,0 +1,104 @@
+{
+  "realm": "${APP_REALM}",
+  "displayName": "${APP_NAME}",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "accessTokenLifespan": 3600,
+  "clientScopes": [
+    {
+      "name": "banking:read",
+      "description": "Read accounts",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "consent.screen.text": "Read your accounts"
+      }
+    },
+    {
+      "name": "banking:write",
+      "description": "Open accounts and move money",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "consent.screen.text": "Open accounts and move money"
+      }
+    },
+    {
+      "name": "${APP_REALM}-api",
+      "description": "Names the API as the audience of access tokens",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "api audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "${APP_REALM}-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "${APP_REALM}-console",
+      "name": "${APP_NAME} console",
+      "description": "bin/console auth:login: a person logs in with the device flow",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "oauth2.device.authorization.grant.enabled": "true"
+      },
+      "defaultClientScopes": ["basic", "profile", "email", "roles", "${APP_REALM}-api", "banking:read", "banking:write"],
+      "optionalClientScopes": ["offline_access"]
+    },
+    {
+      "clientId": "${APP_REALM}-dev",
+      "name": "${APP_NAME} development client",
+      "description": "make token: a machine gets a token with the client credentials grant",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${APP_REALM}-dev-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": ["basic", "roles", "${APP_REALM}-api"],
+      "optionalClientScopes": ["banking:read", "banking:write"]
+    }
+  ],
+  "users": [
+    {
+      "username": "ada",
+      "enabled": true,
+      "email": "ada@${APP_DOMAIN}",
+      "emailVerified": true,
+      "firstName": "Ada",
+      "lastName": "Lovelace",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ada",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

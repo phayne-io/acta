@@ -13,3 +13,6 @@ project skeleton targeting PHP 8.5 and later.
 
 Each package lives under `packages/` with its own `composer.json`, tests and
 documentation.
+
+`make up` in `packages/skeleton` runs it in Docker as MyBank, on <https://api.mybank.io>
+with a mkcert certificate, Keycloak as the identity provider and Valkey as its cache.

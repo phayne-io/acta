@@ -41,7 +41,7 @@ final class ConsoleFactories
     public static function application(ContainerInterface $container): Application
     {
         $settings = Settings::of($container);
-        $application = new Application($settings->string('acta.name', 'Acta application'), $settings->string('acta.version', 'dev'));
+        $application = new Application($settings->string('acta.name', 'Application'), $settings->string('acta.version', 'dev'));
         $application->setCommandLoader(new LazyCommandLoader($container, $settings->strings('acta.console.commands')));
 
         return $application;

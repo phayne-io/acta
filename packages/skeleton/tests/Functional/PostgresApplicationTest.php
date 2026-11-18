@@ -14,8 +14,8 @@ use Throwable;
 /**
  * The same scenarios against PostgreSQL, as in production.
  *
- * Skipped when the server of `phpunit.xml.dist` cannot be reached; `docker compose up -d
- * database` provides it.
+ * Skipped when the server of `phpunit.xml.dist` cannot be reached; `make test` runs them
+ * against the database of the local stack.
  */
 #[CoversNothing]
 #[Group('postgres')]

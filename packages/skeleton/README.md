@@ -1,10 +1,10 @@
-# Acta skeleton
+# MyBank
 
-A project template for hexagonal, event-sourced applications in PHP 8.5 and later: a
+A small bank as a hexagonal, event-sourced application in PHP 8.5 and later: a
 contract-first API, a console and webhooks in front of a domain that knows none of them.
 
-It wires the four Acta libraries together on Mezzio and comes with a small bank as a
-worked example, and with generators that scaffold your own contexts the same way.
+It wires the four Acta libraries together on Mezzio, and comes with generators that
+scaffold further contexts the same way as its `Banking` one.
 
 | | |
 | --- | --- |
@@ -21,29 +21,47 @@ which brings them all.
 
 ## Start
 
+You need Docker and [mkcert](https://github.com/FiloSottile/mkcert).
+
 ```sh
-composer create-project acta/skeleton my-app
-cd my-app
-make up        # the API, its workers, PostgreSQL and a development identity provider
+make hosts     # once: api.mybank.io and auth.mybank.io in /etc/hosts (asks for sudo)
+make up        # the API over HTTPS, its workers, PostgreSQL, Valkey and Keycloak
 ```
 
-The API answers on <http://localhost:8080>; its contract is served at `/openapi.json`.
+The API answers on <https://api.mybank.io>; its contract is served at `/openapi.json`.
 
 ```sh
 TOKEN=$(make -s token)
 
-curl -i -X POST http://localhost:8080/accounts \
+curl -i -X POST https://api.mybank.io/accounts \
      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
      -d '{"owner": "Ada", "currency": "EUR"}'
 # 201 Created — Location: /accounts/0197…
 
-curl -X POST http://localhost:8080/accounts/0197…/deposits \
+curl -X POST https://api.mybank.io/accounts/0197…/deposits \
      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
      -d '{"amount": "12000", "currency": "EUR"}'
 
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/accounts/0197…
+curl -H "Authorization: Bearer $TOKEN" https://api.mybank.io/accounts/0197…
 # {"id":"0197…","owner":"Ada","balance":{"amount":"12000","currency":"EUR"},"version":2}
 ```
+
+### A project of your own
+
+```sh
+composer create-project acta/skeleton my-shop
+```
+
+asks three questions and makes the project yours:
+
+| Question | Default | Where the answer goes |
+| --- | --- | --- |
+| Name of the application | the directory | `.env`, the contract, `composer.json`, this documentation |
+| Domain of the local stack | `<name>.test` | `.env`: the API answers on `api.` and Keycloak on `auth.` under it |
+| Namespace of its classes | `App` | The sources, the tests, the configuration, the generators and the architecture rules |
+
+With `--no-interaction`, give them as `APP_NAME`, `APP_DOMAIN` and `APP_NAMESPACE` in the
+environment. The name and the domain can be changed later in `.env`.
 
 Without Docker, see [Getting started](docs/getting-started.md).
 
@@ -104,6 +122,7 @@ composer mutation       # mutation testing of the domain and the application (ne
 ## Documentation
 
 - [Getting started](docs/getting-started.md) — with and without Docker, the first requests
+- [The local stack](docs/local-stack.md) — HTTPS with mkcert, Keycloak, Valkey: how it fits together
 - [Architecture](docs/architecture.md) — the layers, the path of a request, consistency
 - [Adding a context](docs/adding-a-context.md) — the generators, step by step
 - [Configuration](docs/configuration.md) — environment variables, what a context declares, swapping an adapter

@@ -29,5 +29,5 @@ return new Config()
     ->setFinder(
         Finder::create()
             ->in([__DIR__ . '/src', __DIR__ . '/tests', __DIR__ . '/config', __DIR__ . '/public'])
-            ->append([__FILE__, __DIR__ . '/bin/console']),
+            ->append([__FILE__, __DIR__ . '/bin/console', __DIR__ . '/bin/init-project.php']),
     );

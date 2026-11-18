@@ -12,10 +12,15 @@ return [
     'debug' => Env::bool('APP_DEBUG'),
 
     'acta' => [
-        'name' => 'Acta application',
+        // What the console and the logs call the application.
+        'name' => Env::string('APP_NAME', 'Application'),
         'version' => Env::string('APP_VERSION', 'dev'),
         'root' => dirname(__DIR__, 2),
         'cache_dir' => 'data/cache',
+        // A Valkey or Redis server (redis://host:6379) for what the instances of the
+        // application share: the metadata and the keys of the identity provider. Empty:
+        // files under cache_dir.
+        'cache_dsn' => Env::string('CACHE_DSN'),
 
         // "postgres", or "memory" to keep all state in the process (tests).
         'persistence' => Env::string('APP_PERSISTENCE', 'postgres'),
