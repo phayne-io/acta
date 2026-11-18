@@ -172,4 +172,6 @@ into the templates as well, and the generated code must still pass `composer che
   work yet. The `acta` vendor name is unconfirmed.
 - The `prod` target of the skeleton's Docker image has never been built or run; only
   the `dev` target is, by `make up`.
-- Nothing has been tested against a real identity provider.
+- The only identity provider anything was tested against is the Keycloak 26 of the
+  skeleton's local stack: the API verifying its tokens, client credentials, and the
+  device flow of `auth:login`. No hosted provider (Auth0, Microsoft Entra ID, …) yet.
