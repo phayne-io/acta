@@ -3,6 +3,10 @@
 The adapter is a list of PSR-15 middlewares. Each one does one thing and communicates
 with the next ones through request attributes.
 
+The library does not run them: that is the job of the PSR-15 stack of the application,
+see [With Mezzio](#with-mezzio). `Acta\Http\Testing\Pipeline`, used below to show the
+list at a glance, is a minimal runner for tests and examples.
+
 ```php
 $api = new Pipeline(
     new OperationDispatcher($handlers),
@@ -43,6 +47,38 @@ $match = RouteMatch::from($request);
 $match->operation;        // Acta\Http\OpenApi\Operation
 $match->pathParameters;   // raw strings; use the Input for typed values
 ```
+
+### With a router of your own
+
+`RouteMatch` is all the other middlewares know about routing. They read it from the
+request and never call `Router`, so another router can take its place: once it has
+found its route, it says which operation of the contract that route stands for.
+
+```php
+final readonly class MyRoutingMiddleware implements MiddlewareInterface
+{
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $route = $this->router->match($request);   // yours: FastRoute, Symfony Routing, …
+
+        $match = new RouteMatch($this->contract->operation($route->name), $route->variables);
+
+        return $handler->handle($match->attach($request));
+    }
+}
+```
+
+What `Router` guarantees is then yours to keep:
+
+- the routes are the `paths` of the contract, each named by its `operationId`, so that
+  nothing is declared twice and nothing is served that the contract does not describe;
+- a concrete path wins over a templated one, as OpenAPI requires. A router that takes
+  the first route registered needs them registered in that order;
+- an unknown path throws `HttpException::notFound()` and a known path with another
+  method `HttpException::methodNotAllowed($allowed)`, for `ProblemDetailsMiddleware` to
+  answer with a problem document;
+- path variables are percent-decoded one by one, after matching. A router that decodes
+  the whole path first sees an encoded `/` inside a variable as a separator.
 
 ## Security
 
@@ -142,7 +178,10 @@ are never handled twice.
 ## With Mezzio
 
 Every class above is a plain PSR-15 middleware or handler, so they are piped like any
-other. The router of the contract replaces Mezzio's:
+other in Mezzio, whose pipeline is laminas-stratigility. The router of the contract
+takes the place of Mezzio's for the operations of the contract; routes that are not in
+it (a health check, a webhook receiver) can still go through Mezzio's router, piped
+before `RoutingMiddleware`:
 
 ```php
 $app->pipe(CorrelationMiddleware::class);

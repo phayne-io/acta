@@ -25,13 +25,15 @@ use Acta\Http\Handler\OperationDispatcher;
 use Acta\Http\Handler\OperationHandlers;
 use Acta\Http\Idempotency\IdempotencyMiddleware;
 use Acta\Http\Idempotency\InMemoryIdempotencyStore;
-use Acta\Http\Pipeline;
+use Acta\Http\OpenApi\Operation;
 use Acta\Http\Problem\ExceptionMapper;
 use Acta\Http\Problem\ProblemDetailsMiddleware;
+use Acta\Http\Routing\RouteMatch;
 use Acta\Http\Routing\Router;
 use Acta\Http\Routing\RoutingMiddleware;
 use Acta\Http\Security\SecurityMiddleware;
 use Acta\Http\Testing\ContractAssertions;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Tests\Fixture\Banking\Account;
 use Acta\Http\Tests\Fixture\Banking\AccountId;
 use Acta\Http\Tests\Fixture\Banking\AccountOpened;
@@ -47,6 +49,7 @@ use Acta\Http\Validation\RequestValidationMiddleware;
 use Acta\Http\Validation\RequestValidator;
 use Acta\Http\Validation\ResponseValidationMiddleware;
 use Acta\Http\Validation\ResponseValidator;
+use Closure;
 use DomainException;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\StreamFactory;
@@ -55,6 +58,8 @@ use Money\Money;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 
 /**
@@ -72,6 +77,9 @@ final class EndToEndTest extends HttpTestCase
     private RecordingLogger $logger;
 
     private Pipeline $api;
+
+    /** @var Closure(MiddlewareInterface): Pipeline the same pipeline, routed by the given middleware */
+    private Closure $assemble;
 
     #[Override]
     protected function setUp(): void
@@ -109,11 +117,11 @@ final class EndToEndTest extends HttpTestCase
             }
         };
 
-        $this->api = new Pipeline(
+        $this->assemble = fn(MiddlewareInterface $routing): Pipeline => new Pipeline(
             new OperationDispatcher($this->handlers($commands)),
             new CorrelationMiddleware(),
             new ProblemDetailsMiddleware(self::responder(), [new EventSourcingExceptionMapper(), $businessRules], $this->logger),
-            new RoutingMiddleware(new Router($contract)),
+            $routing,
             new SecurityMiddleware($contract, [
                 'bearer' => new TokenAuthenticator('Authorization', ['Bearer writer' => ['accounts:read', 'accounts:write']]),
                 'apiKey' => new TokenAuthenticator('X-Api-Key', []),
@@ -122,6 +130,7 @@ final class EndToEndTest extends HttpTestCase
             new IdempotencyMiddleware(new InMemoryIdempotencyStore(), new ResponseFactory(), new StreamFactory()),
             new ResponseValidationMiddleware(new ResponseValidator($contract)),
         );
+        $this->api = ($this->assemble)(new RoutingMiddleware(new Router($contract)));
     }
 
     public function testAnAccountIsOpenedThroughTheApi(): void
@@ -157,6 +166,35 @@ final class EndToEndTest extends HttpTestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('"1"', $response->getHeaderLine('ETag'));
         self::assertSame($id, self::json($response)['id']);
+    }
+
+    public function testARequestRoutedByAnotherRouterIsServedTheSame(): void
+    {
+        $id = $this->open();
+        $operation = self::contract()->operation('getAccount');
+
+        // A router that is not the one of this library: it only has to say which
+        // operation the request is for, and with which path variables.
+        $api = ($this->assemble)(new readonly class ($operation, $id) implements MiddlewareInterface {
+            public function __construct(
+                private Operation $operation,
+                private string $accountId,
+            ) {}
+
+            #[Override]
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                return $handler->handle(new RouteMatch($this->operation, ['accountId' => $this->accountId])->attach($request));
+            }
+        });
+
+        $response = $api->handle(self::request('GET', '/wherever/the/other/router/says', [...self::AUTH, 'X-Flags' => '1']));
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame($id, self::json($response)['id']);
+
+        // The security requirements of the operation still apply.
+        self::assertSame(401, $api->handle(self::request('GET', '/wherever/the/other/router/says'))->getStatusCode());
     }
 
     public function testADepositMovesTheAccountToItsNextVersion(): void

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Acta\Http\Tests\Unit\Validation;
 
 use Acta\Http\Exception\ResponseContractViolation;
-use Acta\Http\Pipeline;
 use Acta\Http\Routing\Router;
 use Acta\Http\Routing\RoutingMiddleware;
 use Acta\Http\Testing\ContractAssertions;
+use Acta\Http\Testing\Pipeline;
 use Acta\Http\Tests\Fixture\RecordingLogger;
 use Acta\Http\Tests\HttpTestCase;
 use Acta\Http\Validation\ResponseValidationMiddleware;

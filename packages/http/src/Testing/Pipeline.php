@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Acta\Http;
+namespace Acta\Http\Testing;
 
 use Override;
 use Psr\Http\Message\ResponseInterface;
@@ -13,9 +13,11 @@ use Psr\Http\Server\RequestHandlerInterface;
 /**
  * Runs a request through middlewares, outermost first, then through a final handler.
  *
- * It is all an application needs to serve the contract without a framework, and what
- * the tests use. With Mezzio or any other PSR-15 stack, pipe the same middlewares
- * there instead.
+ * For tests and examples: it lets the middlewares of this library be exercised together
+ * without a framework. It is not how an application is served: pipe the same
+ * middlewares in the PSR-15 stack you already have (Mezzio and laminas-stratigility,
+ * Slim, …), which also brings what this class leaves out, such as lazy loading from a
+ * container and piping by path.
  */
 final readonly class Pipeline implements RequestHandlerInterface
 {

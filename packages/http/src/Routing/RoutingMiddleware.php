@@ -15,6 +15,9 @@ use Psr\Http\Server\RequestHandlerInterface;
  *
  * The {@see RouteMatch} is stored as a request attribute. A path the contract does not
  * declare is a 404, a method it does not declare for that path a 405 with an `Allow` header.
+ *
+ * It is the default way to route, not the only one: the middlewares that follow only
+ * need a {@see RouteMatch} on the request.
  */
 final readonly class RoutingMiddleware implements MiddlewareInterface
 {
@@ -27,6 +30,6 @@ final readonly class RoutingMiddleware implements MiddlewareInterface
     {
         $match = $this->router->match($request->getMethod(), $request->getUri()->getPath());
 
-        return $handler->handle($request->withAttribute(RouteMatch::class, $match));
+        return $handler->handle($match->attach($request));
     }
 }

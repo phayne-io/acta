@@ -92,28 +92,38 @@ final readonly class DepositMoneyHandler implements RequestHandlerInterface
 }
 ```
 
-### 3. Assemble the pipeline
+### 3. Pipe the middlewares
+
+The library is a set of PSR-15 middlewares and brings no middleware runner of its own:
+pipe them, in this order, in the stack you already have. With Mezzio, which runs on
+laminas-stratigility:
+
+```php
+$app->pipe(CorrelationMiddleware::class);          // a trace for every request
+$app->pipe(ProblemDetailsMiddleware::class);       // exceptions as problem+json
+$app->pipe(RoutingMiddleware::class);              // the paths of the contract
+$app->pipe(SecurityMiddleware::class);             // its security requirements
+$app->pipe(RequestValidationMiddleware::class);    // its parameters and bodies
+$app->pipe(ResponseValidationMiddleware::class);   // and its responses
+$app->pipe(OperationDispatcher::class);            // the handler of the operation
+```
+
+Their constructors are plain, to be declared in the container of your choice:
 
 ```php
 $contract = ContractLoader::cached('openapi/openapi.yaml', 'var/cache/contract.php');
-$responder = new Responder($responseFactory, $streamFactory);
 $handlers = new OperationHandlers($container)->registerLazy(DepositMoneyHandler::class /* , ... */);
 
-$api = new Pipeline(
-    new OperationDispatcher($handlers),
-    new CorrelationMiddleware(),                                         // a trace for every request
-    new ProblemDetailsMiddleware($responder, $mappers, $logger),         // exceptions as problem+json
-    new RoutingMiddleware(new Router($contract)),                        // the paths of the contract
-    new SecurityMiddleware($contract, ['bearer' => $authenticator]),     // its security requirements
-    new RequestValidationMiddleware(new RequestValidator($contract)),    // its parameters and bodies
-    new ResponseValidationMiddleware(new ResponseValidator($contract)),  // and its responses
-);
-
-$response = $api->handle($request);
+new RoutingMiddleware(new Router($contract));
+new SecurityMiddleware($contract, ['bearer' => $authenticator]);
+new RequestValidationMiddleware(new RequestValidator($contract));
+new ResponseValidationMiddleware(new ResponseValidator($contract));
+new OperationDispatcher($handlers);
 ```
 
-`Pipeline` is a twenty-line PSR-15 runner. With Mezzio or another PSR-15 stack, pipe the
-same middlewares there instead; see [the pipeline guide](docs/pipeline.md).
+See [the pipeline guide](docs/pipeline.md), which also says how to route with a router
+of your own. In tests and in the example, `Acta\Http\Testing\Pipeline` runs the same
+list without a framework.
 
 ### 4. What clients get
 
