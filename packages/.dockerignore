@@ -1,0 +1,13 @@
+# What `docker build --build-context libraries=packages` may read when the production
+# image of the skeleton is built inside the monorepo: the sources of the libraries, and
+# nothing of the skeleton, which is the main context of that build.
+skeleton
+**/vendor
+**/tests
+**/docs
+**/examples
+**/.git
+**/.phpunit.cache
+**/.phpstan.cache
+**/.php-cs-fixer.cache
+**/composer.lock

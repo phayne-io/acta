@@ -115,3 +115,14 @@ jobs:
       - run: docker build --target prod --tag app:ci .
       - name: The image lists its console commands
         run: docker run --rm app:ci bin/console list
+
+  image:
+    name: The production image builds, finds its classes and starts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build --target prod -t app .
+      - name: The console loads the application
+        run: docker run --rm app bin/console list
+      - name: PHP-FPM accepts its configuration, as an unprivileged user
+        run: docker run --rm app sh -c 'test "$(id -un)" = www-data && php-fpm -t'

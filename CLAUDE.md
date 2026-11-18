@@ -72,7 +72,12 @@ mkcert certificate, Keycloak, Valkey. Its names come from the first three lines 
 ```sh
 make up                  # https://api.mybank.io: API, workers, PostgreSQL, Valkey, Keycloak
 make check               # composer check in the container, PostgreSQL tests included
+docker build --target prod --build-context libraries=.. -t app .   # the production image
 ```
+
+The second build context is for the monorepo only: the libraries are next to the
+skeleton, outside what its build may read (`packages/.dockerignore` says what of them
+is sent).
 
 PostgreSQL for the tests: the libraries read `ACTA_TEST_POSTGRES_DSN`, `_USER`,
 `_PASSWORD` (default database `acta_test`, user `acta`); the skeleton reads
@@ -170,8 +175,9 @@ into the templates as well, and the generated code must still pass `composer che
 
 - Nothing is published on Packagist; `composer create-project acta/skeleton` does not
   work yet. The `acta` vendor name is unconfirmed.
-- The `prod` target of the skeleton's Docker image has never been built or run; only
-  the `dev` target is, by `make up`.
+- The `prod` target of the skeleton's Docker image is built by CI, which also loads the
+  console in it. It was run once by hand in place of the `dev` image of the local
+  stack; nothing does that regularly, and it has never been deployed anywhere.
 - The only identity provider anything was tested against is the Keycloak 26 of the
   skeleton's local stack: the API verifying its tokens, client credentials, and the
   device flow of `auth:login`. No hosted provider (Auth0, Microsoft Entra ID, …) yet.
