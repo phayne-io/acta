@@ -66,7 +66,18 @@ to apply an edited file, start over with `make down ARGS=--volumes`.
 | Scope `mybank-api` | Adds `"aud": "mybank-api"` to access tokens: the `OIDC_AUDIENCE` of the API |
 | Client `mybank-dev` (secret `mybank-dev-secret`) | Client credentials, for `make token`. The banking scopes are optional: `make token ARGS=banking:read` yields a token that may read and not write |
 | Client `mybank-console` | Public, device flow: `make login`, then approve in the browser |
-| User `ada` (password `ada`) | Someone to log in as |
+| User `ada` (password `ada`) | Someone to log in as, with the default roles of the realm |
+| Scopes `basic`, `profile`, `email`, `roles` | The standard ones of Keycloak: the subject, the name, the email address and the roles of whoever logs in |
+
+Two things Keycloak does on import and does not say, both checked by
+`tests/Platform/LocalStackRealmTest.php`:
+
+- a realm file that declares client scopes gets those and no others, the standard ones
+  included: that is why they are written out here. A client that names a scope the file
+  lacks is given tokens without it;
+- an imported user has only the roles the file gives them. Without
+  `default-roles-<realm>`, which holds `offline_access`, `make login` is approved in the
+  browser and then refused.
 
 The secrets and passwords of this stack are for a laptop. None of it is a production
 setup: Keycloak runs in development mode (`start-dev`).
